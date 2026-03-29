@@ -1,0 +1,104 @@
+[
+  {
+    "id": "pp1",
+    "authorName": "윤정민",
+    "authorLevel": "C+",
+    "authorAttendRate": 94,
+    "authorMannerScore": 4.7,
+    "authorTotalGames": 62,
+    "region": "서울 강남",
+    "level": "C+",
+    "preferredTime": "평일 저녁 7시 이후",
+    "preferredDays": [
+      "화",
+      "목",
+      "토"
+    ],
+    "vibe": "competitive",
+    "lookingFor": "복식 파트너 (대회 출전용)",
+    "message": "복식 파트너 구합니다. 주 2~3회 같이 칠 분 찾아요.",
+    "createdAt": "2026-03-28T09:00",
+    "trustScore": 93,
+    "noShowCount": 0,
+    "badges": [
+      "대회 5회 참가",
+      "노쇼 제로"
+    ],
+    "sourceType": "manual_seed"
+  },
+  {
+    "id": "pp2",
+    "authorName": "김영숙",
+    "authorLevel": "D",
+    "authorAttendRate": 100,
+    "authorMannerScore": 4.9,
+    "authorTotalGames": 18,
+    "region": "수원 광교",
+    "level": "D",
+    "preferredTime": "평일 오전 10~12시",
+    "preferredDays": [
+      "월",
+      "수",
+      "금"
+    ],
+    "vibe": "casual",
+    "lookingFor": "편하게 같이 운동할 파트너",
+    "message": "50대 여성입니다. 편하게 같이 운동할 분 구해요.",
+    "createdAt": "2026-03-29T11:00",
+    "trustScore": 88,
+    "noShowCount": 0,
+    "badges": [
+      "첫 승리"
+    ],
+    "sourceType": "manual_seed"
+  },
+  {
+    "id": "pp3",
+    "authorName": "오성호",
+    "authorLevel": "B",
+    "authorAttendRate": 91,
+    "authorMannerScore": 4.4,
+    "authorTotalGames": 145,
+    "region": "인천 청라",
+    "level": "B",
+    "preferredTime": "주말 오전",
+    "preferredDays": [
+      "토",
+      "일"
+    ],
+    "vibe": "competitive",
+    "lookingFor": "혼복 파트너 (B 이상)",
+    "message": "혼복 파트너 찾습니다. B 이상 실력자분 연락주세요.",
+    "createdAt": "2026-03-27T16:00",
+    "trustScore": 91,
+    "noShowCount": 0,
+    "badges": [
+      "번개왕",
+      "대회 5회 참가"
+    ],
+    "sourceType": "manual_seed"
+  },
+  {
+    "id": "pp4",
+    "authorName": "최수연",
+    "authorLevel": "D+",
+    "authorAttendRate": 96,
+    "authorMannerScore": 4.6,
+    "authorTotalGames": 31,
+    "region": "서울 마포",
+    "level": "D+",
+    "preferredTime": "주말 오후",
+    "preferredDays": [
+      "토",
+      "일"
+    ],
+    "vibe": "casual",
+    "lookingFor": "주말 정기 파트너",
+    "message": "주말마다 한 번은 꼭 치고 싶은데 같이 갈 사람이 없어서 구합니다.",
+    "createdAt": "2026-03-30T14:00",
+    "trustScore": 90,
+    "noShowCount": 0,
+    "badges": [],
+    "sourceType": "manual_seed"
+  }
+]

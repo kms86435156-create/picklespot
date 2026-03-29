@@ -1,0 +1,142 @@
+[
+  {
+    "id": "cr-v1-1",
+    "venueId": "v1",
+    "name": "코트 1",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-2",
+    "venueId": "v1",
+    "name": "코트 2",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-3",
+    "venueId": "v1",
+    "name": "코트 3",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-4",
+    "venueId": "v1",
+    "name": "코트 4",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-5",
+    "venueId": "v1",
+    "name": "코트 5",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-6",
+    "venueId": "v1",
+    "name": "코트 6",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-7",
+    "venueId": "v1",
+    "name": "코트 7",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v1-8",
+    "venueId": "v1",
+    "name": "코트 8",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-1",
+    "venueId": "v6",
+    "name": "코트 1",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-2",
+    "venueId": "v6",
+    "name": "코트 2",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-3",
+    "venueId": "v6",
+    "name": "코트 3",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-4",
+    "venueId": "v6",
+    "name": "코트 4",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-5",
+    "venueId": "v6",
+    "name": "코트 5",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  },
+  {
+    "id": "cr-v6-6",
+    "venueId": "v6",
+    "name": "코트 6",
+    "sportType": "pickleball",
+    "indoorOutdoor": "indoor",
+    "capacity": 4,
+    "surfaceType": "폴리우레탄",
+    "isActive": true
+  }
+]

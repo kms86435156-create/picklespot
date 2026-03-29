@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Venue {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  category      String   @default("pickleball_court")
+  description   String   @default("")
+  addressRoad   String   @default("")
+  addressJibun  String   @default("")
+  lat           Float?
+  lng           Float?
+  regionDepth1  String   @default("")
+  regionDepth2  String   @default("")
+  regionDepth3  String   @default("")
+  phone         String   @default("")
+  website       String   @default("")
+  sourcePrimary String   @default("manual")
+  sourceUrls    String   @default("[]")
+  isVerified    Boolean  @default(false)
+  lastVerifiedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  facility      VenueFacility?
+  hours         VenueHour[]
+  pricing       VenuePricing[]
+  images        VenueImage[]
+  sourceRecords SourceRecord[]
+}
+
+model VenueFacility {
+  id              String  @id @default(cuid())
+  venueId         String  @unique
+  venue           Venue   @relation(fields: [venueId], references: [id])
+  indoorOutdoor   String  @default("unknown")
+  parking         Boolean @default(false)
+  shower          Boolean @default(false)
+  lighting        Boolean @default(false)
+  rentalEquipment Boolean @default(false)
+  floorType       String  @default("")
+  courtCount      Int     @default(0)
+  amenitiesText   String  @default("")
+}
+
+model VenueHour {
+  id          String @id @default(cuid())
+  venueId     String
+  venue       Venue  @relation(fields: [venueId], references: [id])
+  dayOfWeek   Int
+  openTime    String @default("")
+  closeTime   String @default("")
+  holidayText String @default("")
+}
+
+model VenuePricing {
+  id        String @id @default(cuid())
+  venueId   String
+  venue     Venue  @relation(fields: [venueId], references: [id])
+  priceType String @default("hourly")
+  amount    Int    @default(0)
+  unit      String @default("원/시간")
+  note      String @default("")
+}
+
+model VenueImage {
+  id        String @id @default(cuid())
+  venueId   String
+  venue     Venue  @relation(fields: [venueId], references: [id])
+  imageUrl  String
+  source    String @default("")
+  sourceUrl String @default("")
+}
+
+model Tournament {
+  id                  String    @id @default(cuid())
+  title               String
+  organizer           String    @default("")
+  region              String    @default("")
+  venueName           String    @default("")
+  venueId             String?
+  startDate           DateTime?
+  endDate             DateTime?
+  registrationOpenAt  DateTime?
+  registrationCloseAt DateTime?
+  fee                 Int       @default(0)
+  feeText             String    @default("")
+  divisions           String    @default("")
+  level               String    @default("")
+  status              String    @default("open")
+  description         String    @default("")
+  detailUrl           String    @default("")
+  sourcePrimary       String    @default("manual")
+  lastVerifiedAt      DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  sourceRecords       SourceRecord[]
+}
+
+model Coach {
+  id            String   @id @default(cuid())
+  name          String
+  region        String   @default("")
+  venueId       String?
+  lessonType    String   @default("")
+  specialties   String   @default("")
+  priceText     String   @default("")
+  contact       String   @default("")
+  bio           String   @default("")
+  experience    String   @default("")
+  sourcePrimary String   @default("manual")
+  detailUrl     String   @default("")
+  lastVerifiedAt DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sourceRecords SourceRecord[]
+}
+
+model SourceRecord {
+  id             String   @id @default(cuid())
+  entityType     String
+  entityId       String
+  sourceName     String
+  sourceUrl      String   @default("")
+  rawPayload     String   @default("{}")
+  collectedAt    DateTime @default(now())
+  normalizedHash String   @default("")
+  parseStatus    String   @default("success")
+
+  venueId        String?
+  venue          Venue?      @relation(fields: [venueId], references: [id])
+  tournamentId   String?
+  tournament     Tournament? @relation(fields: [tournamentId], references: [id])
+  coachId        String?
+  coach          Coach?      @relation(fields: [coachId], references: [id])
+}
+
+model SyncJob {
+  id           String   @id @default(cuid())
+  sourceName   String
+  startedAt    DateTime @default(now())
+  finishedAt   DateTime?
+  status       String   @default("running")
+  createdCount Int      @default(0)
+  updatedCount Int      @default(0)
+  skippedCount Int      @default(0)
+  errorCount   Int      @default(0)
+  logs         String   @default("[]")
+}
+
+model ManualReviewQueue {
+  id              String    @id @default(cuid())
+  entityType      String
+  candidatePayload String   @default("{}")
+  reason          String    @default("")
+  status          String    @default("pending")
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
+}
