@@ -34,29 +34,12 @@ const USER_DATA_FILES = new Set([
 
 // ═══ JSON helpers ═══
 export function readJSON(file: string): any[] {
-  // User-data files: return empty until real data is entered.
-  // This prevents any stale seed/mock data from previous builds.
-  if (USER_DATA_FILES.has(file)) {
-    try {
-      const p = path.join(DATA_DIR, file);
-      if (!fs.existsSync(p)) return [];
-      const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
-      if (!Array.isArray(raw) || raw.length === 0) return [];
-      // Only allow items with IDs that were created by the app (not seed)
-      return raw.filter((item: any) => {
-        if (!item.id) return false;
-        // App-generated IDs start with prefixes like mt_, mp_, br_, or contain timestamps
-        if (/^(mt_|mp_|br_|reg_|lead_)/.test(item.id)) return true;
-        // Reject all known seed patterns
-        if (/^(t\d|v\d|fg\d|pp\d|co\d|cl\d|n\d|mnc|ue|rr|rt|cr|mf|b\d)/.test(item.id)) return false;
-        // Reject items explicitly marked as seed
-        if (item.sourceType === "manual_seed" || item.sourcePrimary === "seed") return false;
-        // Default: allow (in case admin creates items with custom IDs)
-        return true;
-      });
-    } catch { return []; }
+  // In production (Vercel): user-data files return empty to prevent stale seed data.
+  // Vercel bundles data/ files from build time, which may contain old seed data.
+  // In development: read normally so admin can manage data locally.
+  if (USER_DATA_FILES.has(file) && process.env.NODE_ENV === "production") {
+    return [];
   }
-  // Non-user-data files (like contents.json) read normally
   try {
     const p = path.join(DATA_DIR, file);
     if (!fs.existsSync(p)) return [];
