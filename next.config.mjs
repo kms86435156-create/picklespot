@@ -8,6 +8,8 @@ const nextConfig = {
       },
     ],
   },
+  // Force clean build - no stale data cache
+  generateBuildId: () => `build-${Date.now()}`,
 };
 
 export default nextConfig;
