@@ -8,6 +8,7 @@ export async function GET() {
 
   const checks: Record<string, any> = {
     status: "ok",
+    buildVersion: "v3-clean-data",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
     storage: isSupabaseEnabled ? "supabase" : "json_fallback",

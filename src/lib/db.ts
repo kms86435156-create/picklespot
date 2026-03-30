@@ -34,25 +34,33 @@ const USER_DATA_FILES = new Set([
 
 // ═══ JSON helpers ═══
 export function readJSON(file: string): any[] {
+  // User-data files: return empty until real data is entered.
+  // This prevents any stale seed/mock data from previous builds.
+  if (USER_DATA_FILES.has(file)) {
+    try {
+      const p = path.join(DATA_DIR, file);
+      if (!fs.existsSync(p)) return [];
+      const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
+      if (!Array.isArray(raw) || raw.length === 0) return [];
+      // Only allow items with IDs that were created by the app (not seed)
+      return raw.filter((item: any) => {
+        if (!item.id) return false;
+        // App-generated IDs start with prefixes like mt_, mp_, br_, or contain timestamps
+        if (/^(mt_|mp_|br_|reg_|lead_)/.test(item.id)) return true;
+        // Reject all known seed patterns
+        if (/^(t\d|v\d|fg\d|pp\d|co\d|cl\d|n\d|mnc|ue|rr|rt|cr|mf|b\d)/.test(item.id)) return false;
+        // Reject items explicitly marked as seed
+        if (item.sourceType === "manual_seed" || item.sourcePrimary === "seed") return false;
+        // Default: allow (in case admin creates items with custom IDs)
+        return true;
+      });
+    } catch { return []; }
+  }
+  // Non-user-data files (like contents.json) read normally
   try {
     const p = path.join(DATA_DIR, file);
     if (!fs.existsSync(p)) return [];
-    const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
-    // If this is a user-data file but contains seed entries (id starts with known seed prefixes),
-    // filter them out. Seed entries have IDs like "t1", "v1", "fg1", "pp1", "co1", etc.
-    if (USER_DATA_FILES.has(file) && Array.isArray(raw)) {
-      const filtered = raw.filter((item: any) => {
-        if (!item.id) return true;
-        // Filter out known seed/mock ID patterns
-        if (/^(t\d+|v\d+|fg\d+|pp\d+|co\d+|cl\d+|n\d+|mnc|reg_seed)/.test(item.id)) return false;
-        // Filter out items with sourceType "manual_seed"
-        if (item.sourceType === "manual_seed") return false;
-        if (item.sourcePrimary === "seed") return false;
-        return true;
-      });
-      return filtered;
-    }
-    return raw;
+    return JSON.parse(fs.readFileSync(p, "utf-8"));
   } catch { return []; }
 }
 
