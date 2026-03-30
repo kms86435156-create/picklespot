@@ -10,7 +10,6 @@ const links = [
   { label: "대회", href: "/tournaments" },
   { label: "피클볼장", href: "/courts" },
   { label: "동호회", href: "/clubs" },
-  { label: "같이치기", href: "/play-together" },
 ];
 
 export default function Navbar() {
