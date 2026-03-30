@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { isSupabaseEnabled, isDemoMode, supabaseAdmin, supabasePublic, getSupabaseStatus } from "@/lib/supabase";
 

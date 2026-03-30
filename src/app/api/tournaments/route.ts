@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTournaments } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const region = url.searchParams.get("region") || undefined;

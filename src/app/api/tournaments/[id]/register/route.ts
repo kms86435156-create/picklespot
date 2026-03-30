@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getTournament, getRegistrations, createRegistrationAsync } from "@/lib/db";
 import { genId } from "@/lib/csv-parser";

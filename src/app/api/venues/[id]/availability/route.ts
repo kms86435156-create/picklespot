@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getAvailability } from "@/lib/booking-engine";
 import { getVenue } from "@/lib/db";
