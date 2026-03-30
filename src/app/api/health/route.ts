@@ -4,7 +4,7 @@ import { isSupabaseEnabled, isDemoMode, supabaseAdmin, supabasePublic, getSupaba
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 export async function GET() {
-  const sbStatus = getSupabaseStatus();
+  const sb = getSupabaseStatus();
 
   const checks: Record<string, any> = {
     status: "ok",
@@ -12,43 +12,57 @@ export async function GET() {
     environment: process.env.NODE_ENV,
     storage: isSupabaseEnabled ? "supabase" : "json_fallback",
     isDemoMode,
-    writeEnabled: !isDemoMode,
-    supabaseClients: {
-      admin: sbStatus.adminEnabled,
-      public: sbStatus.publicEnabled,
+    isProductionFallback: sb.isProductionFallback,
+    supabase: {
+      enabled: sb.isEnabled,
+      admin: sb.adminEnabled,
+      public: sb.publicEnabled,
+    },
+    auth: {
+      adminBasicAuth: !!(process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD),
     },
     envVars: {
-      NEXT_PUBLIC_SUPABASE_URL: sbStatus.hasUrl,
-      SUPABASE_SERVICE_ROLE_KEY: sbStatus.hasServiceRoleKey,
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: sbStatus.hasAnonKey,
-      ADMIN_API_TOKEN: !!process.env.ADMIN_API_TOKEN,
+      NEXT_PUBLIC_SUPABASE_URL: sb.hasUrl,
+      SUPABASE_SERVICE_ROLE_KEY: sb.hasServiceRoleKey,
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: sb.hasAnonKey,
+      ADMIN_USERNAME: !!process.env.ADMIN_USERNAME,
+      ADMIN_PASSWORD: !!process.env.ADMIN_PASSWORD,
     },
-    misconfigured: [] as string[],
+    issues: [] as string[],
   };
 
-  // Misconfiguration 체크
-  if (IS_PRODUCTION && !process.env.ADMIN_API_TOKEN) {
-    checks.misconfigured.push("ADMIN_API_TOKEN 미설정 — 관리자 API가 모든 요청을 차단합니다");
-  }
-  if (IS_PRODUCTION && isDemoMode) {
-    checks.misconfigured.push("Supabase 미연결 — write API가 비활성화됩니다");
+  // Production 필수 체크
+  if (IS_PRODUCTION) {
+    if (!sb.isEnabled) checks.issues.push("CRITICAL: Supabase 미연결 — 데이터가 영속되지 않습니다");
+    if (!sb.adminEnabled) checks.issues.push("WARNING: Supabase admin client 없음 — write 불가");
+    if (!process.env.ADMIN_USERNAME || !process.env.ADMIN_PASSWORD) {
+      checks.issues.push("CRITICAL: ADMIN 인증 미설정 — 관리자 페이지 무방비");
+    }
   }
 
   // Supabase 연결 테스트
   const testClient = supabaseAdmin || supabasePublic;
   if (testClient) {
     try {
-      const { count, error } = await testClient.from("venues").select("*", { count: "exact", head: true });
-      checks.supabase = { connected: !error, venueCount: count ?? 0, error: error?.message || null };
+      const { count, error } = await testClient.from("tournaments").select("*", { count: "exact", head: true });
+      checks.supabase.connected = !error;
+      checks.supabase.tournamentCount = count ?? 0;
+      if (error) checks.supabase.error = error.message;
     } catch (e: any) {
-      checks.supabase = { connected: false, error: e.message };
+      checks.supabase.connected = false;
+      checks.supabase.error = e.message;
     }
   } else {
-    checks.supabase = { connected: false, reason: "no client" };
+    checks.supabase.connected = false;
   }
 
-  if (checks.misconfigured.length > 0) checks.status = "misconfigured";
-  if (IS_PRODUCTION && !checks.supabase?.connected) checks.status = "degraded";
+  // 최종 상태 판정
+  if (checks.issues.some((i: string) => i.startsWith("CRITICAL"))) {
+    checks.status = IS_PRODUCTION ? "error" : "warning";
+  } else if (checks.issues.length > 0) {
+    checks.status = "warning";
+  }
 
-  return NextResponse.json(checks, { status: checks.status === "ok" ? 200 : 503 });
+  const httpStatus = checks.status === "error" ? 503 : 200;
+  return NextResponse.json(checks, { status: httpStatus });
 }

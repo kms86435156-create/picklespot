@@ -1,16 +1,24 @@
-// Data layer — Supabase primary, JSON file fallback
-// When NEXT_PUBLIC_SUPABASE_URL is set: reads/writes go to Postgres
-// When not set: falls back to local JSON files (dev/demo)
-
+/**
+ * Data access layer — Supabase primary, JSON file fallback
+ * Supabase 환경변수가 있으면 Postgres, 없으면 로컬 JSON 파일 사용
+ */
 import "server-only";
-import { supabase, isSupabaseEnabled, isDemoMode } from "./supabase";
+import { supabase, supabaseAdmin, isSupabaseEnabled, isDemoMode, isProductionFallback } from "./supabase";
 export { isDemoMode };
 import fs from "fs";
 import path from "path";
 
+// Production에서 JSON fallback write 시 경고 로그
+function warnIfProductionFallback(operation: string) {
+  if (isProductionFallback) {
+    console.warn(`⚠️  PRODUCTION FALLBACK: ${operation} — data written to JSON file, NOT persisted in DB`);
+  }
+}
+
 const DATA_DIR = path.join(process.cwd(), "data");
 
-function readJSON(file: string): any[] {
+// ═══ JSON helpers ═══
+export function readJSON(file: string): any[] {
   try {
     const p = path.join(DATA_DIR, file);
     if (!fs.existsSync(p)) return [];
@@ -25,75 +33,273 @@ export function writeJSON(file: string, data: any[]) {
   } catch (e) { console.error(`writeJSON(${file}):`, e); }
 }
 
-// ═══ Venues ═══
-export async function getVenues(filters?: { region?: string; keyword?: string }) {
-  if (isSupabaseEnabled) {
-    let q = supabase!.from("venues").select("*");
-    if (filters?.region) q = q.eq("region", filters.region);
-    if (filters?.keyword) q = q.ilike("name", `%${filters.keyword}%`);
-    const { data } = await q.order("name");
-    return (data || []).map(mapVenue);
+// ═══ Generic Supabase client (admin for writes) ═══
+const db = supabaseAdmin || supabase;
+
+// ═══ camelCase ↔ snake_case ═══
+function toSnake(obj: any): any {
+  const result: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const sk = k.replace(/[A-Z]/g, m => "_" + m.toLowerCase());
+    result[sk] = v;
   }
-  let v = readJSON("venues.json").map(mapVenue);
-  if (filters?.region) v = v.filter((x: any) => x.region === filters.region);
-  if (filters?.keyword) v = v.filter((x: any) => x.name.includes(filters.keyword));
-  return v;
+  return result;
 }
 
-export async function getVenue(id: string) {
-  if (isSupabaseEnabled) {
-    const { data } = await supabase!.from("venues").select("*").eq("id", id).single();
-    return data ? mapVenue(data) : null;
+function toCamel(obj: any): any {
+  if (!obj) return obj;
+  const result: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const ck = k.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    result[ck] = v;
   }
-  const raw = readJSON("venues.json").find((v: any) => v.id === id);
-  return raw ? mapVenue(raw) : null;
+  return result;
 }
 
-// ═══ Tournaments ═══
+// ═══════════════════════════════
+// Tournaments
+// ═══════════════════════════════
 export async function getTournaments(filters?: { region?: string; status?: string; keyword?: string }) {
   if (isSupabaseEnabled) {
-    let q = supabase!.from("tournaments").select("*");
+    let q = db!.from("tournaments").select("*");
     if (filters?.region) q = q.eq("region", filters.region);
     if (filters?.status) q = q.eq("status", filters.status);
     if (filters?.keyword) q = q.ilike("title", `%${filters.keyword}%`);
-    const { data } = await q.order("start_date");
-    return (data || []).map(mapTournament);
+    const { data } = await q.order("start_date", { ascending: true });
+    return (data || []).map(toCamel);
   }
-  let t = readJSON("tournaments.json").map(mapTournament);
+  let t = readJSON("tournaments.json");
   if (filters?.region) t = t.filter((x: any) => x.region === filters.region);
   if (filters?.status) t = t.filter((x: any) => x.status === filters.status);
-  if (filters?.keyword) t = t.filter((x: any) => x.title.includes(filters.keyword));
+  if (filters?.keyword) t = t.filter((x: any) => x.title?.includes(filters.keyword));
   return t;
 }
 
 export async function getTournament(id: string) {
   if (isSupabaseEnabled) {
-    const { data } = await supabase!.from("tournaments").select("*").eq("id", id).single();
-    return data ? mapTournament(data) : null;
+    const { data } = await db!.from("tournaments").select("*").eq("id", id).single();
+    return data ? toCamel(data) : null;
   }
-  const raw = readJSON("tournaments.json").find((t: any) => t.id === id);
-  return raw ? mapTournament(raw) : null;
+  return readJSON("tournaments.json").find((t: any) => t.id === id) || null;
 }
 
-// ═══ Coaches ═══
+// ═══════════════════════════════
+// Venues
+// ═══════════════════════════════
+export async function getVenues(filters?: { region?: string; keyword?: string }) {
+  if (isSupabaseEnabled) {
+    let q = db!.from("venues").select("*");
+    if (filters?.region) q = q.eq("region", filters.region);
+    if (filters?.keyword) q = q.ilike("name", `%${filters.keyword}%`);
+    const { data } = await q.order("name");
+    return (data || []).map(toCamel);
+  }
+  let v = readJSON("venues.json");
+  if (filters?.region) v = v.filter((x: any) => x.region === filters.region);
+  if (filters?.keyword) v = v.filter((x: any) => x.name?.includes(filters.keyword));
+  return v;
+}
+
+export async function getVenue(id: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("venues").select("*").eq("id", id).single();
+    return data ? toCamel(data) : null;
+  }
+  return readJSON("venues.json").find((v: any) => v.id === id) || null;
+}
+
+// ═══════════════════════════════
+// Clubs
+// ═══════════════════════════════
+export async function getClubs(filters?: { region?: string; keyword?: string; recruiting?: boolean }) {
+  if (isSupabaseEnabled) {
+    let q = db!.from("clubs").select("*");
+    if (filters?.region) q = q.ilike("region", `%${filters.region}%`);
+    if (filters?.keyword) q = q.or(`name.ilike.%${filters.keyword}%,description.ilike.%${filters.keyword}%`);
+    if (filters?.recruiting !== undefined) q = q.eq("is_recruiting", filters.recruiting);
+    const { data } = await q.order("name");
+    return (data || []).map(toCamel);
+  }
+  let c = readJSON("clubs.json");
+  if (filters?.region) c = c.filter((x: any) => x.region?.includes(filters!.region!));
+  if (filters?.keyword) c = c.filter((x: any) => x.name?.includes(filters!.keyword!) || x.description?.includes(filters!.keyword!));
+  if (filters?.recruiting !== undefined) c = c.filter((x: any) => x.isRecruiting === filters!.recruiting);
+  return c;
+}
+
+export async function getClub(id: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("clubs").select("*").eq("id", id).single();
+    return data ? toCamel(data) : null;
+  }
+  return readJSON("clubs.json").find((c: any) => c.id === id) || null;
+}
+
+// ═══════════════════════════════
+// Generic CRUD (JSON fallback + Supabase)
+// ═══════════════════════════════
+const TABLE_MAP: Record<string, string> = {
+  "tournaments.json": "tournaments",
+  "venues.json": "venues",
+  "clubs.json": "clubs",
+  "registrations.json": "registrations",
+  "leads.json": "leads",
+  "contents.json": "contents",
+  "meetups.json": "meetups",
+  "meetup-participants.json": "meetup_participants",
+  "booking-requests.json": "booking_requests",
+};
+
+export function createEntity(file: string, entity: any) {
+  warnIfProductionFallback(`createEntity(${file})`);
+  if (isSupabaseEnabled && TABLE_MAP[file]) {
+    const table = TABLE_MAP[file];
+    const snaked = toSnake(entity);
+    // Fire-and-forget for now; caller doesn't await
+    db!.from(table).insert(snaked).then(({ error }) => {
+      if (error) console.error(`Supabase insert ${table}:`, error.message);
+    });
+    return entity;
+  }
+  const data = readJSON(file);
+  data.push(entity);
+  writeJSON(file, data);
+  return entity;
+}
+
+export function updateEntity(file: string, id: string, updates: any) {
+  if (isSupabaseEnabled && TABLE_MAP[file]) {
+    const table = TABLE_MAP[file];
+    const snaked = toSnake(updates);
+    delete snaked.id;
+    delete snaked.created_at;
+    db!.from(table).update(snaked).eq("id", id).then(({ error }) => {
+      if (error) console.error(`Supabase update ${table}:`, error.message);
+    });
+    return { id, ...updates };
+  }
+  const data = readJSON(file);
+  const idx = data.findIndex((e: any) => e.id === id);
+  if (idx === -1) return null;
+  data[idx] = { ...data[idx], ...updates, updatedAt: new Date().toISOString() };
+  writeJSON(file, data);
+  return data[idx];
+}
+
+export function deleteEntity(file: string, id: string) {
+  if (isSupabaseEnabled && TABLE_MAP[file]) {
+    const table = TABLE_MAP[file];
+    db!.from(table).delete().eq("id", id).then(({ error }) => {
+      if (error) console.error(`Supabase delete ${table}:`, error.message);
+    });
+    return true;
+  }
+  const data = readJSON(file);
+  const idx = data.findIndex((e: any) => e.id === id);
+  if (idx === -1) return false;
+  data.splice(idx, 1);
+  writeJSON(file, data);
+  return true;
+}
+
+export function bulkCreateEntities(file: string, entities: any[]) {
+  if (isSupabaseEnabled && TABLE_MAP[file]) {
+    const table = TABLE_MAP[file];
+    const snaked = entities.map(toSnake);
+    db!.from(table).insert(snaked).then(({ error }) => {
+      if (error) console.error(`Supabase bulk insert ${table}:`, error.message);
+    });
+    return entities.length;
+  }
+  const data = readJSON(file);
+  data.push(...entities);
+  writeJSON(file, data);
+  return entities.length;
+}
+
+// ═══════════════════════════════
+// Registrations
+// ═══════════════════════════════
+export async function getRegistrations(tournamentId: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("registrations").select("*").eq("tournament_id", tournamentId).order("created_at");
+    return (data || []).map(toCamel);
+  }
+  return readJSON("registrations.json").filter((r: any) => r.tournamentId === tournamentId);
+}
+
+export async function createRegistrationAsync(reg: any) {
+  if (isSupabaseEnabled) {
+    const snaked = toSnake(reg);
+    const { data, error } = await db!.from("registrations").insert(snaked).select().single();
+    if (error) {
+      if (error.code === "23505") throw new Error("이 연락처로 이미 신청되어 있습니다.");
+      throw new Error(error.message);
+    }
+    // Update tournament participant count
+    try {
+      await db!.from("tournaments")
+        .update({ current_participants: (await db!.from("registrations").select("id", { count: "exact" }).eq("tournament_id", reg.tournamentId).not("status", "in", '("cancelled","rejected")')).count || 0 })
+        .eq("id", reg.tournamentId);
+    } catch {}
+    return data ? toCamel(data) : reg;
+  }
+  // JSON fallback
+  const data = readJSON("registrations.json");
+  data.push(reg);
+  writeJSON("registrations.json", data);
+  // Update tournament count
+  const tournaments = readJSON("tournaments.json");
+  const tIdx = tournaments.findIndex((t: any) => t.id === reg.tournamentId);
+  if (tIdx !== -1) {
+    tournaments[tIdx].currentParticipants = (tournaments[tIdx].currentParticipants || 0) + 1;
+    writeJSON("tournaments.json", tournaments);
+  }
+  return reg;
+}
+
+// Legacy sync wrapper
+export function createRegistration(reg: any) {
+  if (isSupabaseEnabled) {
+    createRegistrationAsync(reg).catch(e => console.error("createRegistration:", e));
+    return reg;
+  }
+  const data = readJSON("registrations.json");
+  data.push(reg);
+  writeJSON("registrations.json", data);
+  const tournaments = readJSON("tournaments.json");
+  const tIdx = tournaments.findIndex((t: any) => t.id === reg.tournamentId);
+  if (tIdx !== -1) {
+    tournaments[tIdx].currentParticipants = (tournaments[tIdx].currentParticipants || 0) + 1;
+    writeJSON("tournaments.json", tournaments);
+  }
+  return reg;
+}
+
+export function updateRegistration(id: string, updates: any) {
+  return updateEntity("registrations.json", id, updates);
+}
+
+// ═══════════════════════════════
+// Coaches / Flash Games / Partners (legacy)
+// ═══════════════════════════════
 export async function getCoaches(filters?: { region?: string; keyword?: string }) {
   if (isSupabaseEnabled) {
-    let q = supabase!.from("coaches").select("*");
+    let q = db!.from("coaches").select("*");
     if (filters?.region) q = q.ilike("region", `%${filters.region}%`);
     if (filters?.keyword) q = q.ilike("name", `%${filters.keyword}%`);
     const { data } = await q.order("name");
-    return (data || []).map(mapCoach);
+    return (data || []).map(toCamel);
   }
-  let c = readJSON("coaches.json").map(mapCoach);
+  let c = readJSON("coaches.json");
   if (filters?.region) c = c.filter((x: any) => x.region?.includes(filters!.region!));
   if (filters?.keyword) c = c.filter((x: any) => x.name?.includes(filters!.keyword!));
   return c;
 }
 
-// ═══ Flash Games ═══
 export async function getFlashGames(filters?: { region?: string; status?: string }) {
   if (isSupabaseEnabled) {
-    let q = supabase!.from("flash_games").select("*");
+    let q = db!.from("flash_games").select("*");
     if (filters?.region) q = q.eq("region", filters.region);
     if (filters?.status) q = q.eq("status", filters.status);
     const { data } = await q.order("date_time");
@@ -107,7 +313,7 @@ export async function getFlashGames(filters?: { region?: string; status?: string
 
 export async function getFlashGame(id: string) {
   if (isSupabaseEnabled) {
-    const { data } = await supabase!.from("flash_games").select("*").eq("id", id).single();
+    const { data } = await db!.from("flash_games").select("*").eq("id", id).single();
     return data;
   }
   return readJSON("flash-games.json").find((g: any) => g.id === id) || null;
@@ -115,7 +321,7 @@ export async function getFlashGame(id: string) {
 
 export async function getPartnerPosts(filters?: { region?: string }) {
   if (isSupabaseEnabled) {
-    let q = supabase!.from("partner_posts").select("*");
+    let q = db!.from("partner_posts").select("*");
     if (filters?.region) q = q.ilike("region", `%${filters.region}%`);
     const { data } = await q.order("created_at", { ascending: false });
     return data || [];
@@ -125,20 +331,25 @@ export async function getPartnerPosts(filters?: { region?: string }) {
   return p;
 }
 
-// ═══ User / Notifications ═══
+// ═══════════════════════════════
+// User / Notifications
+// ═══════════════════════════════
 export function getCurrentUser() { return readJSON("user.json")[0] || null; }
 export function getNotifications() { return readJSON("notifications.json"); }
 export function getNotificationSettings() { return readJSON("notification-settings.json"); }
 export function getSyncJobs() { return readJSON("sync-jobs.json"); }
 
-// ═══ Home Stats ═══
+// ═══════════════════════════════
+// Home Stats
+// ═══════════════════════════════
 export async function getHomeStats() {
-  const [venues, tournaments, flashGames] = await Promise.all([getVenues(), getTournaments(), getFlashGames()]);
+  const [venues, tournaments, flashGames, clubs] = await Promise.all([getVenues(), getTournaments(), getFlashGames(), getClubs()]);
   return {
     venueCount: venues.length,
     tournamentOpenCount: tournaments.filter((t: any) => t.status === "open").length,
     tournamentTotalCount: tournaments.length,
     flashGameOpenCount: flashGames.filter((g: any) => g.status === "open").length,
+    clubCount: clubs.length,
     lastSyncAt: null,
     dataSource: isSupabaseEnabled ? "supabase" : "json_fallback",
   };
@@ -163,84 +374,96 @@ export function getDataMeta() {
   };
 }
 
-// ═══ Field mappers (snake_case DB → camelCase frontend) ═══
-function mapVenue(r: any) {
-  if (!r) return r;
-  return {
-    id: r.id, name: r.name, slug: r.slug, address: r.address || "",
-    region: r.region || "", lat: r.lat, lng: r.lng, type: r.type || "indoor",
-    courtCount: r.court_count ?? r.courtCount ?? 0, surface: r.surface || "",
-    pricePerHour: r.price_per_hour ?? r.pricePerHour ?? 0,
-    priceWeekend: r.price_weekend ?? r.priceWeekend ?? null,
-    amenities: r.amenities || [], hasParking: r.has_parking ?? r.hasParking ?? false,
-    hasShower: r.has_shower ?? r.hasShower ?? false,
-    hasLighting: r.has_lighting ?? r.hasLighting ?? false,
-    hasEquipmentRental: r.has_equipment_rental ?? r.hasEquipmentRental ?? false,
-    operatingHours: r.operating_hours ?? r.operatingHours ?? "",
-    rating: r.rating || 0,
-    reviewCount: r.review_count ?? r.reviewCount ?? 0,
-    reviews: r.reviews || [],
-    peakHours: r.peak_hours ?? r.peakHours ?? "",
-    description: r.description || "", phone: r.phone || "",
-    bookingMode: r.booking_mode ?? r.bookingMode ?? "outbound_link",
-    isBookable: r.is_bookable ?? r.isBookable ?? false,
-    bookingNotice: r.booking_notice ?? r.bookingNotice ?? null,
-    externalBookingUrl: r.external_booking_url ?? r.externalBookingUrl ?? null,
-    isVerified: r.is_verified ?? r.isVerified ?? false,
-    lastVerifiedAt: r.last_verified_at ?? r.lastVerifiedAt ?? null,
-    sourcePrimary: r.source_primary ?? r.sourcePrimary ?? "manual",
-    availableSlots: r.availableSlots || [],
-  };
+// ═══════════════════════════════
+// Meetups (같이치기/번개모임)
+// ═══════════════════════════════
+export async function getMeetups(filters?: { region?: string; status?: string }) {
+  if (isSupabaseEnabled) {
+    let q = db!.from("meetups").select("*");
+    if (filters?.region) q = q.eq("region", filters.region);
+    if (filters?.status) q = q.eq("status", filters.status);
+    const { data } = await q.order("meetup_date", { ascending: true });
+    return (data || []).map(toCamel);
+  }
+  let m = readJSON("meetups.json");
+  if (filters?.region) m = m.filter((x: any) => x.region === filters.region);
+  if (filters?.status) m = m.filter((x: any) => x.status === filters.status);
+  return m;
 }
 
-function mapTournament(r: any) {
-  if (!r) return r;
-  // Support both snake_case (Supabase) and camelCase (JSON fallback)
-  const startDate = r.start_date || r.startDate || "";
-  const endDate = r.end_date || r.endDate || "";
-  const regClose = r.registration_close_at || r.registrationCloseAt || null;
-  const venueName = r.venue_name || r.venueName || "";
-  const feeText = r.fee_text || r.feeText || "";
-  const detailUrl = r.detail_url || r.detailUrl || "";
-  const sourcePrimary = r.source_primary || r.sourcePrimary || "manual";
-  const lastVerified = r.last_verified_at || r.lastVerifiedAt;
-  const maxSlots = r.max_slots || r.maxSlots || 0;
-  const currentSlots = r.current_slots || r.currentSlots || 0;
-  const waitlistCount = r.waitlist_count || r.waitlistCount || 0;
-  const orgContact = r.organizer_contact || r.organizerContact || "";
-  const refundPolicy = r.refund_policy || r.refundPolicy || "주최 측 문의";
-  const prizeInfo = r.prize_info || r.prizeInfo || "";
-  const address = r.address || "";
-
-  return {
-    id: r.id, title: r.title, organizer: r.organizer || "", region: r.region || "",
-    venueName, startDate, endDate, registrationCloseAt: regClose,
-    fee: r.fee || 0, feeText, divisions: r.divisions || "",
-    level: r.level || "", status: r.status || "open", description: r.description || "",
-    detailUrl, sourcePrimary, lastVerifiedAt: lastVerified,
-    // Frontend compat fields
-    date: startDate, location: venueName, type: r.type || "doubles",
-    typeLabel: r.divisions || "",
-    registrationDeadline: regClose,
-    address, currentSlots, maxSlots, waitlistCount,
-    entryFee: r.fee || 0, organizerContact: orgContact,
-    refundPolicy, rules: r.rules || [], schedule: r.schedule || [], faq: r.faq || [],
-    notice: r.notice || "", amenities: r.amenities || [], participants: r.participants || [],
-    prizeInfo,
-  };
+export async function getMeetup(id: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("meetups").select("*").eq("id", id).single();
+    return data ? toCamel(data) : null;
+  }
+  return readJSON("meetups.json").find((m: any) => m.id === id) || null;
 }
 
-function mapCoach(r: any) {
-  if (!r) return r;
-  return {
-    id: r.id, name: r.name, region: r.region || "",
-    specialties: r.specialties || [], rating: r.rating || 0,
-    reviewCount: r.review_count ?? r.reviewCount ?? 0,
-    pricePerSession: r.price_per_session ?? r.pricePerSession ?? 0,
-    sessionDuration: r.session_duration ?? r.sessionDuration ?? "60분",
-    lessonType: r.lesson_type ?? r.lessonType ?? [],
-    bio: r.bio || "", experience: r.experience || "",
-    sourcePrimary: r.source_primary ?? r.sourcePrimary ?? "manual",
-    lastVerifiedAt: r.last_verified_at ?? r.lastVerifiedAt ?? null,
-  };
+export async function getMeetupParticipants(meetupId: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("meetup_participants").select("*").eq("meetup_id", meetupId).order("created_at");
+    return (data || []).map(toCamel);
+  }
+  return readJSON("meetup-participants.json").filter((p: any) => p.meetupId === meetupId);
+}
+
+export async function createMeetupParticipant(participant: any) {
+  if (isSupabaseEnabled) {
+    const snaked = toSnake(participant);
+    const { data, error } = await db!.from("meetup_participants").insert(snaked).select().single();
+    if (error) {
+      if (error.code === "23505") throw new Error("이미 참가 신청되어 있습니다.");
+      throw new Error(error.message);
+    }
+    // Update meetup current_players
+    try {
+      const { count } = await db!.from("meetup_participants").select("id", { count: "exact" }).eq("meetup_id", participant.meetupId).not("status", "eq", "cancelled");
+      await db!.from("meetups").update({ current_players: count || 0 }).eq("id", participant.meetupId);
+    } catch {}
+    return data ? toCamel(data) : participant;
+  }
+  const data = readJSON("meetup-participants.json");
+  // Check duplicate
+  const exists = data.find((p: any) => p.meetupId === participant.meetupId && p.participantPhone === participant.participantPhone && p.status !== "cancelled");
+  if (exists) throw new Error("이미 참가 신청되어 있습니다.");
+  data.push(participant);
+  writeJSON("meetup-participants.json", data);
+  // Update meetup count
+  const meetups = readJSON("meetups.json");
+  const mIdx = meetups.findIndex((m: any) => m.id === participant.meetupId);
+  if (mIdx !== -1) {
+    meetups[mIdx].currentPlayers = (meetups[mIdx].currentPlayers || 0) + 1;
+    writeJSON("meetups.json", meetups);
+  }
+  return participant;
+}
+
+// ═══════════════════════════════
+// Booking Requests (예약 요청)
+// ═══════════════════════════════
+export async function getBookingRequests(filters?: { venueId?: string; status?: string }) {
+  if (isSupabaseEnabled) {
+    let q = db!.from("booking_requests").select("*");
+    if (filters?.venueId) q = q.eq("venue_id", filters.venueId);
+    if (filters?.status) q = q.eq("status", filters.status);
+    const { data } = await q.order("created_at", { ascending: false });
+    return (data || []).map(toCamel);
+  }
+  let r = readJSON("booking-requests.json");
+  if (filters?.venueId) r = r.filter((x: any) => x.venueId === filters.venueId);
+  if (filters?.status) r = r.filter((x: any) => x.status === filters.status);
+  return r;
+}
+
+export async function createBookingRequest(request: any) {
+  if (isSupabaseEnabled) {
+    const snaked = toSnake(request);
+    const { data, error } = await db!.from("booking_requests").insert(snaked).select().single();
+    if (error) throw new Error(error.message);
+    return data ? toCamel(data) : request;
+  }
+  const data = readJSON("booking-requests.json");
+  data.push(request);
+  writeJSON("booking-requests.json", data);
+  return request;
 }

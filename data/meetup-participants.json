@@ -1,0 +1,137 @@
+[
+  {
+    "id": "mp_1774871100143_gq29a1",
+    "meetupId": "mt_1774871098294_oppnxw",
+    "participantName": "참가자1",
+    "participantPhone": "010-1111-1111",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:00.143Z"
+  },
+  {
+    "id": "mp_1774871102890_fi2757",
+    "meetupId": "mt_1774871101868_n4hhwa",
+    "participantName": "A",
+    "participantPhone": "010-1101877",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:02.890Z"
+  },
+  {
+    "id": "mp_1774871103120_e1oxjh",
+    "meetupId": "mt_1774871103073_pxkqvv",
+    "participantName": "P1",
+    "participantPhone": "010-1111-0001",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:03.120Z"
+  },
+  {
+    "id": "mp_1774871103161_1i8s94",
+    "meetupId": "mt_1774871103073_pxkqvv",
+    "participantName": "P2",
+    "participantPhone": "010-1111-0002",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:03.161Z"
+  },
+  {
+    "id": "mp_1774871103197_6f77t0",
+    "meetupId": "mt_1774871103073_pxkqvv",
+    "participantName": "P3",
+    "participantPhone": "010-1111-0003",
+    "note": "",
+    "status": "waitlist",
+    "createdAt": "2026-03-30T11:45:03.197Z"
+  },
+  {
+    "id": "mp_1774871149089_6gzv6r",
+    "meetupId": "mt_1774871149054_uzu7j7",
+    "participantName": "참가자1",
+    "participantPhone": "010-1111-1111",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:49.089Z"
+  },
+  {
+    "id": "mp_1774871149184_n61w7h",
+    "meetupId": "mt_1774871149134_pcfwzw",
+    "participantName": "A",
+    "participantPhone": "010-1149138",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:49.184Z"
+  },
+  {
+    "id": "mp_1774871149296_f8svpf",
+    "meetupId": "mt_1774871149261_kgwq0e",
+    "participantName": "P1",
+    "participantPhone": "010-1111-0001",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:49.296Z"
+  },
+  {
+    "id": "mp_1774871149332_0l0e3v",
+    "meetupId": "mt_1774871149261_kgwq0e",
+    "participantName": "P2",
+    "participantPhone": "010-1111-0002",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:45:49.332Z"
+  },
+  {
+    "id": "mp_1774871149361_8jot0u",
+    "meetupId": "mt_1774871149261_kgwq0e",
+    "participantName": "P3",
+    "participantPhone": "010-1111-0003",
+    "note": "",
+    "status": "waitlist",
+    "createdAt": "2026-03-30T11:45:49.361Z"
+  },
+  {
+    "id": "mp_1774871202230_mn4ex4",
+    "meetupId": "mt_1774871202188_6rh0g0",
+    "participantName": "참가자1",
+    "participantPhone": "010-1111-1111",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:46:42.230Z"
+  },
+  {
+    "id": "mp_1774871202308_b6w9o8",
+    "meetupId": "mt_1774871202276_bs4sip",
+    "participantName": "A",
+    "participantPhone": "010-1202281",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:46:42.308Z"
+  },
+  {
+    "id": "mp_1774871202446_lhghir",
+    "meetupId": "mt_1774871202403_kqktsh",
+    "participantName": "P1",
+    "participantPhone": "010-1111-0001",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:46:42.446Z"
+  },
+  {
+    "id": "mp_1774871202479_9ze6lh",
+    "meetupId": "mt_1774871202403_kqktsh",
+    "participantName": "P2",
+    "participantPhone": "010-1111-0002",
+    "note": "",
+    "status": "joined",
+    "createdAt": "2026-03-30T11:46:42.479Z"
+  },
+  {
+    "id": "mp_1774871202515_edx7t1",
+    "meetupId": "mt_1774871202403_kqktsh",
+    "participantName": "P3",
+    "participantPhone": "010-1111-0003",
+    "note": "",
+    "status": "waitlist",
+    "createdAt": "2026-03-30T11:46:42.515Z"
+  }
+]

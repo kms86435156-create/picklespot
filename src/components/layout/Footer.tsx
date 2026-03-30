@@ -9,11 +9,11 @@ export default function Footer() {
         {/* Links */}
         <div className="flex flex-wrap gap-4 mb-4 text-xs text-text-muted">
           <Link href="/tournaments" className="hover:text-brand-cyan transition-colors">대회</Link>
+          <Link href="/courts" className="hover:text-brand-cyan transition-colors">피클볼장</Link>
+          <Link href="/clubs" className="hover:text-brand-cyan transition-colors">동호회</Link>
           <Link href="/play-together" className="hover:text-brand-cyan transition-colors">같이치기</Link>
-          <Link href="/courts" className="hover:text-brand-cyan transition-colors">코트예약</Link>
-          <Link href="/lessons" className="hover:text-brand-cyan transition-colors">레슨</Link>
-          <Link href="/community" className="hover:text-brand-cyan transition-colors">커뮤니티</Link>
           <Link href="/learn" className="hover:text-brand-cyan transition-colors">배우기</Link>
+          <Link href="/for-clubs" className="hover:text-brand-cyan transition-colors">운영자 등록</Link>
         </div>
 
         {/* Status */}

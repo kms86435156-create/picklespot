@@ -1,18 +1,1 @@
-[
-  {
-    "id": "cp-v1",
-    "venueId": "v1",
-    "freeHoursBefore": 24,
-    "partialRefundHoursBefore": 6,
-    "partialRefundPercent": 50,
-    "description": "24시간 전 무료 취소, 6시간 전까지 50% 환불, 이후 환불 불가"
-  },
-  {
-    "id": "cp-v6",
-    "venueId": "v6",
-    "freeHoursBefore": 12,
-    "partialRefundHoursBefore": 3,
-    "partialRefundPercent": 50,
-    "description": "12시간 전 무료 취소, 3시간 전까지 50% 환불, 이후 환불 불가"
-  }
-]
+[]

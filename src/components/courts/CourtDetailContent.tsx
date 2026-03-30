@@ -111,7 +111,7 @@ export default function CourtDetailContent({ venue: c }: { venue: any }) {
       const checkoutRes = await fetch("/api/bookings/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ holdToken, userId: "user-1", userName: "이정호", userPhone: "010-1234-5678", bookingMode: c.bookingMode }),
+        body: JSON.stringify({ holdToken, userId: "guest", userName: "예약자", userPhone: "", bookingMode: c.bookingMode }),
       });
       const checkoutData = await checkoutRes.json();
       if (!checkoutRes.ok) {
@@ -175,7 +175,11 @@ export default function CourtDetailContent({ venue: c }: { venue: any }) {
               </div>
               <div className="flex gap-2 shrink-0">
                 <button type="button" onClick={() => toast("링크가 복사되었습니다.", "success")} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="공유"><Share2 className="w-4 h-4 text-text-muted" /></button>
-                <button type="button" onClick={() => toast("전화 연결 기능은 준비중입니다.", "info")} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="전화"><Phone className="w-4 h-4 text-text-muted" /></button>
+                {c.phone ? (
+                  <a href={`tel:${c.phone}`} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="전화"><Phone className="w-4 h-4 text-text-muted" /></a>
+                ) : (
+                  <span className="p-2.5 bg-white/5 border border-ui-border rounded-sm min-w-[44px] min-h-[44px] flex items-center justify-center opacity-30" title="전화번호 없음"><Phone className="w-4 h-4 text-text-muted" /></span>
+                )}
               </div>
             </div>
 
@@ -368,13 +372,18 @@ export default function CourtDetailContent({ venue: c }: { venue: any }) {
                     </div>
                     <div className="flex flex-col gap-2 mt-5 max-w-xs mx-auto">
                       <button type="button" onClick={() => { setBookingStep("idle"); setSelectedSlot(null); }} className="w-full py-3 text-sm font-bold bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan rounded-sm hover:bg-brand-cyan/20 transition-all min-h-[44px]">추가 예약하기</button>
-                      <Link href="/mypage" className="w-full py-3 text-sm text-text-muted hover:text-white transition-colors text-center min-h-[44px] block">마이페이지에서 확인</Link>
+                      <Link href="/courts" className="w-full py-3 text-sm text-text-muted hover:text-white transition-colors text-center min-h-[44px] block">코트 목록으로 돌아가기</Link>
                     </div>
                   </motion.div>
                 ) : null}
               </>
             )}
           </div>
+        </motion.div>
+
+        {/* ── 예약 문의 폼 ── */}
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <BookingRequestForm venueId={c.id} venueName={c.name} />
         </motion.div>
 
         {/* ── 리뷰 ── */}
@@ -429,6 +438,96 @@ export default function CourtDetailContent({ venue: c }: { venue: any }) {
         )}
         <div className="h-20 md:hidden" />
       </div>
+    </div>
+  );
+}
+
+function BookingRequestForm({ venueId, venueName }: { venueId: string; venueName: string }) {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"form" | "submitting" | "success" | "error">("form");
+  const [error, setError] = useState("");
+  const [form, setForm] = useState({ requesterName: "", requesterPhone: "", bookingDate: "", bookingTime: "", playerCount: 2, memo: "" });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.requesterName || !form.requesterPhone || !form.bookingDate) { setError("필수 항목을 입력해주세요."); return; }
+    setStep("submitting");
+    try {
+      const res = await fetch("/api/booking-requests", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId, venueName, ...form }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error); }
+      setStep("success");
+    } catch (e: any) { setError(e.message); setStep("error"); }
+  };
+
+  if (!open) {
+    return (
+      <div className="relative bg-ui-bg/50 border border-ui-border rounded-sm p-5 mb-5">
+        <h3 className="font-bold mb-2">예약 문의</h3>
+        <p className="text-sm text-text-muted mb-3">이 피클볼장에 예약 문의를 보내보세요. 관리자가 확인 후 연락드립니다.</p>
+        <button onClick={() => setOpen(true)} className="px-6 py-2.5 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">예약 문의하기</button>
+      </div>
+    );
+  }
+
+  if (step === "success") {
+    return (
+      <div className="relative bg-ui-bg/50 border border-brand-cyan/20 rounded-sm p-5 mb-5 text-center">
+        <CheckCircle className="w-10 h-10 text-brand-cyan mx-auto mb-2" />
+        <h3 className="font-bold mb-1">예약 문의 접수 완료!</h3>
+        <p className="text-sm text-text-muted">관리자가 확인 후 연락드리겠습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative bg-ui-bg/50 border border-brand-cyan/20 rounded-sm p-5 mb-5">
+      <h3 className="font-bold mb-4">예약 문의</h3>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] text-text-muted mb-1">이름 <span className="text-brand-red">*</span></label>
+            <input type="text" required value={form.requesterName} onChange={e => setForm(p => ({ ...p, requesterName: e.target.value }))}
+              className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white focus:border-brand-cyan focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-[11px] text-text-muted mb-1">연락처 <span className="text-brand-red">*</span></label>
+            <input type="tel" required value={form.requesterPhone} onChange={e => setForm(p => ({ ...p, requesterPhone: e.target.value }))} placeholder="010-0000-0000"
+              className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white placeholder:text-text-muted/50 focus:border-brand-cyan focus:outline-none" />
+          </div>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label className="block text-[11px] text-text-muted mb-1">날짜 <span className="text-brand-red">*</span></label>
+            <input type="date" required value={form.bookingDate} onChange={e => setForm(p => ({ ...p, bookingDate: e.target.value }))}
+              className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white focus:border-brand-cyan focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-[11px] text-text-muted mb-1">시간</label>
+            <input type="time" value={form.bookingTime} onChange={e => setForm(p => ({ ...p, bookingTime: e.target.value }))}
+              className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white focus:border-brand-cyan focus:outline-none" />
+          </div>
+          <div>
+            <label className="block text-[11px] text-text-muted mb-1">인원</label>
+            <input type="number" min={1} max={20} value={form.playerCount} onChange={e => setForm(p => ({ ...p, playerCount: +e.target.value }))}
+              className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white focus:border-brand-cyan focus:outline-none" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[11px] text-text-muted mb-1">메모</label>
+          <input type="text" value={form.memo} onChange={e => setForm(p => ({ ...p, memo: e.target.value }))} placeholder="추가 요청 사항"
+            className="w-full px-3 py-2 bg-dark border border-ui-border rounded text-sm text-white placeholder:text-text-muted/50 focus:border-brand-cyan focus:outline-none" />
+        </div>
+        {error && <div className="text-sm text-red-400">{error}</div>}
+        <div className="flex gap-2">
+          <button type="submit" disabled={step === "submitting"} className="flex-1 py-2.5 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors disabled:opacity-50">
+            {step === "submitting" ? "처리 중..." : "예약 문의 보내기"}
+          </button>
+          <button type="button" onClick={() => setOpen(false)} className="px-4 py-2.5 text-sm text-text-muted hover:text-white transition-colors">취소</button>
+        </div>
+      </form>
     </div>
   );
 }

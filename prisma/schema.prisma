@@ -83,8 +83,10 @@ model Tournament {
   id                  String    @id @default(cuid())
   title               String
   organizer           String    @default("")
+  organizerContact    String    @default("")
   region              String    @default("")
   venueName           String    @default("")
+  venueAddress        String    @default("")
   venueId             String?
   startDate           DateTime?
   endDate             DateTime?
@@ -94,15 +96,69 @@ model Tournament {
   feeText             String    @default("")
   divisions           String    @default("")
   level               String    @default("")
+  maxParticipants     Int       @default(0)
+  currentParticipants Int       @default(0)
   status              String    @default("open")
   description         String    @default("")
   detailUrl           String    @default("")
+  prizeInfo           String    @default("")
+  refundPolicy        String    @default("")
+  rules               String    @default("[]")
+  schedule            String    @default("[]")
+  posterUrl           String    @default("")
   sourcePrimary       String    @default("manual")
   lastVerifiedAt      DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  registrations       TournamentRegistration[]
   sourceRecords       SourceRecord[]
+}
+
+model TournamentRegistration {
+  id              String    @id @default(cuid())
+  tournamentId    String
+  tournament      Tournament @relation(fields: [tournamentId], references: [id])
+  playerName      String
+  playerPhone     String    @default("")
+  playerEmail     String    @default("")
+  teamName        String    @default("")
+  partnerName     String    @default("")
+  division        String    @default("")
+  level           String    @default("")
+  status          String    @default("pending")
+  paidAmount      Int       @default(0)
+  paidAt          DateTime?
+  memo            String    @default("")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Club {
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  region          String    @default("")
+  city            String    @default("")
+  description     String    @default("")
+  memberCount     Int       @default(0)
+  level           String    @default("")
+  meetingSchedule String    @default("")
+  meetingVenue    String    @default("")
+  venueId         String?
+  fee             String    @default("")
+  contactName     String    @default("")
+  contactPhone    String    @default("")
+  contactKakao    String    @default("")
+  website         String    @default("")
+  logoUrl         String    @default("")
+  isRecruiting    Boolean   @default(true)
+  isVerified      Boolean   @default(false)
+  foundedAt       String    @default("")
+  tags            String    @default("[]")
+  sourcePrimary   String    @default("manual")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 }
 
 model Coach {

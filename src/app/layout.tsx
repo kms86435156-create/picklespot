@@ -24,15 +24,23 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pickleball-platform.vercel.app";
+
 export const metadata: Metadata = {
   title: "PBL.SYS — 피클볼 올인원 플랫폼",
   description:
-    "대회 검색, 코트 예약, 같이 칠 사람 찾기까지. 피클볼의 모든 것, 한 곳에서.",
+    "전국 피클볼 대회 일정, 피클볼장 찾기, 동호회 탐색까지. 피클볼의 모든 것, 한 곳에서.",
+  metadataBase: new URL(siteUrl),
   openGraph: {
     title: "PBL.SYS — 피클볼 올인원 플랫폼",
-    description: "대회 검색, 코트 예약, 같이 칠 사람 찾기까지. 피클볼의 모든 것, 한 곳에서.",
+    description: "전국 피클볼 대회 일정, 피클볼장 찾기, 동호회 탐색까지. 피클볼의 모든 것, 한 곳에서.",
     type: "website",
     locale: "ko_KR",
+    siteName: "PBL.SYS",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

@@ -1,11 +1,10 @@
-import { getFlashGames, getPartnerPosts } from "@/lib/db";
-import PlayTogetherContent from "@/components/play-together/PlayTogetherContent";
+import { getMeetups } from "@/lib/db";
+import MeetupsPage from "@/components/meetups/MeetupsPage";
 
-export const metadata = { title: "같이치기 - PBL.SYS" };
+export const metadata = { title: "같이치기 - PBL.SYS", description: "피클볼 번개 모임을 찾고, 직접 만들어보세요." };
 export const dynamic = "force-dynamic";
 
 export default async function PlayTogetherPage() {
-  const flashGames = await getFlashGames();
-  const partnerPosts = await getPartnerPosts();
-  return <PlayTogetherContent flashGames={flashGames} partnerPosts={partnerPosts} />;
+  const meetups = await getMeetups();
+  return <MeetupsPage meetups={meetups} />;
 }

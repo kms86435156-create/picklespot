@@ -165,17 +165,18 @@ function QuickActionCard({
 
 /* ─── 메인 컴포넌트 ─── */
 interface HomeProps {
-  stats?: { venueCount: number; tournamentOpenCount: number; flashGameOpenCount: number; lastSyncAt: string | null };
+  stats?: { venueCount: number; tournamentOpenCount: number; flashGameOpenCount: number; clubCount?: number; lastSyncAt: string | null };
   venues?: any[];
   tournaments?: any[];
   flashGames?: any[];
+  clubs?: any[];
   dataMeta?: { lastSyncAt: string | null; dataBaseline: string; isStale: boolean };
 }
 
-export default function HomeContent({ stats, venues = [], tournaments = [], flashGames = [], dataMeta }: HomeProps) {
+export default function HomeContent({ stats, venues = [], tournaments = [], flashGames = [], clubs = [], dataMeta }: HomeProps) {
   const upcomingTournaments = tournaments.slice(0, 4);
   const nearbyCourts = venues.slice(0, 3);
-  const s = stats || { venueCount: venues.length, tournamentOpenCount: tournaments.length, flashGameOpenCount: flashGames.length, lastSyncAt: null };
+  const s = stats || { venueCount: venues.length, tournamentOpenCount: tournaments.length, flashGameOpenCount: flashGames.length, clubCount: clubs.length, lastSyncAt: null };
 
   return (
     <div className="relative">
@@ -372,17 +373,57 @@ export default function HomeContent({ stats, venues = [], tournaments = [], flas
             </div>
           </FadeInSection>
 
-          {/* 오늘의 번개 */}
+          {/* 모집중인 동호회 */}
           <FadeInSection delay={0.15}>
             <SectionHeader
-              icon={<Zap className="w-4 h-4 text-brand-cyan" />}
-              title="지금 모집중인 번개"
-              linkText="전체 번개 보기"
-              linkHref="/play-together"
+              icon={<Users className="w-4 h-4 text-brand-cyan" />}
+              title="회원 모집중인 동호회"
+              linkText="전체 동호회 보기"
+              linkHref="/clubs"
             />
-            <div className="relative bg-ui-bg/20 border border-ui-border rounded-sm p-6 text-center">
-              <p className="text-text-muted text-sm mb-2">번개 모임 기능은 준비중입니다</p>
-              <Link href="/play-together" className="text-xs text-brand-cyan hover:underline">같이치기 페이지 둘러보기 →</Link>
+            {clubs.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {clubs.map((c: any) => (
+                  <Link key={c.id} href="/clubs" className="block">
+                    <div className="relative bg-ui-bg/40 border border-ui-border rounded-sm p-4 hover:border-brand-cyan/30 transition-all group h-full">
+                      <TechCorners />
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-bold text-sm group-hover:text-brand-cyan transition-colors">{c.name}</h3>
+                        <span className="text-[10px] px-2 py-0.5 bg-green-400/10 text-green-400 rounded-full">모집중</span>
+                      </div>
+                      <p className="text-xs text-text-muted mb-2">{c.region} {c.city} · {c.level || "전 급수"}</p>
+                      <div className="flex items-center gap-3 text-xs text-text-muted">
+                        <span>회원 {c.memberCount}명</span>
+                        <span>{c.meetingSchedule || "일정 문의"}</span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="relative bg-ui-bg/20 border border-ui-border rounded-sm p-6 text-center">
+                <p className="text-text-muted text-sm mb-2">등록된 동호회가 없습니다</p>
+                <Link href="/clubs" className="text-xs text-brand-cyan hover:underline">동호회 페이지 보기 →</Link>
+              </div>
+            )}
+          </FadeInSection>
+
+          {/* 동호회 대표 CTA */}
+          <FadeInSection delay={0.2}>
+            <div className="relative bg-gradient-to-r from-brand-cyan/10 via-brand-cyan/5 to-brand-red/5 border border-brand-cyan/20 rounded-sm p-6 md:p-8">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <div className="flex-1">
+                  <span className="text-[10px] font-mono text-brand-cyan tracking-widest block mb-2">FOR CLUB LEADERS</span>
+                  <h3 className="text-lg md:text-xl font-black mb-2">동호회를 운영하고 계신가요?</h3>
+                  <p className="text-sm text-text-muted">회원 모집, 대회 접수, 일정 관리까지 — 무료로 동호회 운영 도구를 사용하세요.</p>
+                </div>
+                <Link
+                  href="/for-clubs"
+                  className="shrink-0 inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors"
+                >
+                  무료로 시작하기 <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </FadeInSection>
         </div>

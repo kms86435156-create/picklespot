@@ -36,7 +36,7 @@ const items: LearnItem[] = [
   {
     id: "l2", title: "서브의 기본 — 언더핸드 서브 마스터하기", category: "기술", difficulty: "초급", type: "video", duration: "8분",
     description: "정확한 서브 자세와 손목 각도, 토스 타이밍을 배웁니다.",
-    relatedCta: { label: "레슨 예약하기", href: "/lessons" },
+    relatedCta: { label: "내 주변 코트 찾기", href: "/courts" },
   },
   {
     id: "l3", title: "주방(Kitchen) 규칙 완벽 정리", category: "규칙", difficulty: "초급", type: "article", duration: "4분",
@@ -45,17 +45,17 @@ const items: LearnItem[] = [
       { title: "NVZ 기본 규칙", content: "네트 앞 2.13m 영역(Kitchen)에서는 발리(공이 바운스되기 전 타격)가 금지됩니다. 발이 NVZ 라인을 밟거나 안에 들어간 상태에서 발리하면 폴트." },
       { title: "흔한 실수", content: "발리 후 관성으로 NVZ에 들어가는 것도 폴트입니다. 발리 후 파트너가 잡아주거나, 스스로 밸런스를 유지해야 합니다." },
     ],
-    relatedCta: { label: "초보 번개 참여하기", href: "/play-together" },
+    relatedCta: { label: "내 주변 코트 찾기", href: "/courts" },
   },
   {
     id: "l4", title: "딩크샷 — 네트 앞 소프트 게임", category: "기술", difficulty: "중급", type: "video", duration: "12분",
     description: "딩크의 원리, 타점, 다양한 딩크 변형을 연습합니다.",
-    relatedCta: { label: "레슨 예약하기", href: "/lessons" },
+    relatedCta: { label: "내 주변 코트 찾기", href: "/courts" },
   },
   {
     id: "l5", title: "복식 포지셔닝 전략", category: "전략", difficulty: "중급", type: "article", duration: "7분",
     description: "스태킹, 스위칭, 포치 등 복식 포지셔닝의 핵심 전략을 배웁니다.",
-    relatedCta: { label: "같이 칠 파트너 찾기", href: "/play-together" },
+    relatedCta: { label: "동호회 찾기", href: "/clubs" },
   },
   {
     id: "l6", title: "어니(Erne) — 고급 공격 기술", category: "기술", difficulty: "고급", type: "video", duration: "10분",
@@ -81,12 +81,12 @@ const items: LearnItem[] = [
   {
     id: "l9", title: "서드샷 드롭 — 공격에서 수비로의 전환", category: "기술", difficulty: "중급", type: "video", duration: "9분",
     description: "서브 후 세 번째 샷을 네트 앞에 부드럽게 떨어뜨리는 기술. C→B 레벨업의 핵심.",
-    relatedCta: { label: "레슨 예약하기", href: "/lessons" },
+    relatedCta: { label: "내 주변 코트 찾기", href: "/courts" },
   },
   {
     id: "l10", title: "피클볼 에티켓 — 매너 있는 플레이어 되기", category: "규칙", difficulty: "입문", type: "article", duration: "3분",
     description: "코트 위에서의 기본 에티켓, 셀프 심판 매너, 좋은 파트너가 되는 법.",
-    relatedCta: { label: "초보 번개 참여하기", href: "/play-together" },
+    relatedCta: { label: "동호회 찾기", href: "/clubs" },
   },
 ];
 
@@ -232,18 +232,18 @@ export default function LearnContent() {
               <span className="font-bold text-lg">배운 내용을 바로 실전에 적용해 보세요</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Link href="/lessons" className="block">
+              <Link href="/tournaments" className="block">
                 <div className="bg-dark/30 border border-ui-border rounded-sm p-4 hover:border-brand-cyan/20 transition-all text-center group">
                   <GraduationCap className="w-6 h-6 text-brand-cyan mx-auto mb-2" />
-                  <div className="font-bold text-sm group-hover:text-brand-cyan transition-colors">레슨 예약하기</div>
-                  <div className="text-xs text-text-muted">코치에게 1:1로 배우기</div>
+                  <div className="font-bold text-sm group-hover:text-brand-cyan transition-colors">대회 찾기</div>
+                  <div className="text-xs text-text-muted">실력을 시험해 보세요</div>
                 </div>
               </Link>
-              <Link href="/play-together" className="block">
+              <Link href="/clubs" className="block">
                 <div className="bg-dark/30 border border-ui-border rounded-sm p-4 hover:border-brand-cyan/20 transition-all text-center group">
                   <Users className="w-6 h-6 text-brand-cyan mx-auto mb-2" />
-                  <div className="font-bold text-sm group-hover:text-brand-cyan transition-colors">초보 번개 참여하기</div>
-                  <div className="text-xs text-text-muted">같은 실력끼리 편하게</div>
+                  <div className="font-bold text-sm group-hover:text-brand-cyan transition-colors">동호회 찾기</div>
+                  <div className="text-xs text-text-muted">함께 칠 동호회 탐색</div>
                 </div>
               </Link>
               <Link href="/courts" className="block">

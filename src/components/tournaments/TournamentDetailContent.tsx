@@ -71,9 +71,15 @@ export default function TournamentDetailContent({ tournament: t }: { tournament:
                   <button type="button" onClick={() => toast("링크가 복사되었습니다.", "success")} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="공유">
                     <Share2 className="w-4 h-4 text-text-muted" />
                   </button>
-                  <button type="button" onClick={() => toast("문의 기능은 준비중입니다.", "info")} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="문의">
-                    <MessageSquare className="w-4 h-4 text-text-muted" />
-                  </button>
+                  {t.organizerContact ? (
+                    <a href={`tel:${t.organizerContact}`} className="p-2.5 bg-white/5 border border-ui-border rounded-sm hover:border-brand-cyan/30 transition-all min-w-[44px] min-h-[44px] flex items-center justify-center" title="주최자 연락">
+                      <MessageSquare className="w-4 h-4 text-text-muted" />
+                    </a>
+                  ) : (
+                    <span className="p-2.5 bg-white/5 border border-ui-border rounded-sm min-w-[44px] min-h-[44px] flex items-center justify-center opacity-30" title="연락처 없음">
+                      <MessageSquare className="w-4 h-4 text-text-muted" />
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -231,7 +237,9 @@ export default function TournamentDetailContent({ tournament: t }: { tournament:
                     <span className="font-bold text-white">{t.organizer}</span>
                     <span className="text-text-muted ml-2">{t.organizerContact}</span>
                   </div>
-                  <button type="button" onClick={() => toast("문의 기능은 준비중입니다.", "info")} className="text-xs text-brand-cyan hover:underline">문의하기</button>
+                  {t.organizerContact && (
+                    <a href={`tel:${t.organizerContact}`} className="text-xs text-brand-cyan hover:underline">전화 문의</a>
+                  )}
                 </div>
               </DetailCard>
             </motion.div>

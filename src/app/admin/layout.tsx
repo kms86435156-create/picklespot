@@ -12,20 +12,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <nav className="space-y-1">
             <AdminLink href="/admin" label="대시보드" />
-            <AdminLink href="/admin/bookings" label="예약 관리" />
-            <AdminLink href="/admin/courts" label="코트 관리" />
-            <AdminLink href="/admin/settings" label="설정" />
+            <div className="border-t border-ui-border my-3" />
+            <div className="px-3 py-1 text-[10px] text-text-muted font-mono uppercase tracking-wider">데이터 관리</div>
+            <AdminLink href="/admin/tournaments" label="대회 관리" />
+            <AdminLink href="/admin/venues" label="장소 관리" />
+            <AdminLink href="/admin/clubs" label="동호회 관리" />
+            <div className="border-t border-ui-border my-3" />
+            <div className="px-3 py-1 text-[10px] text-text-muted font-mono uppercase tracking-wider">운영</div>
+            <AdminLink href="/admin/registrations" label="대회 접수 관리" />
+            <AdminLink href="/admin/booking-requests" label="예약 요청 관리" />
+            <AdminLink href="/admin/meetups" label="번개모임 관리" />
+            <AdminLink href="/admin/leads" label="운영자 리드" />
+            <AdminLink href="/admin/contents" label="콘텐츠 관리" />
             <div className="border-t border-ui-border my-3" />
             <AdminLink href="/" label="← 사이트로 돌아가기" />
           </nav>
         </aside>
 
         {/* Mobile nav */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-ui-border z-50 flex">
-          <MobileLink href="/admin" label="대시보드" />
-          <MobileLink href="/admin/bookings" label="예약" />
-          <MobileLink href="/admin/courts" label="코트" />
-          <MobileLink href="/admin/settings" label="설정" />
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-ui-border z-50 flex overflow-x-auto">
+          <MobileLink href="/admin" label="홈" />
+          <MobileLink href="/admin/tournaments" label="대회" />
+          <MobileLink href="/admin/venues" label="장소" />
+          <MobileLink href="/admin/clubs" label="동호회" />
+          <MobileLink href="/admin/registrations" label="접수" />
+          <MobileLink href="/admin/booking-requests" label="예약" />
+          <MobileLink href="/admin/meetups" label="번개" />
         </div>
 
         <main className="flex-1 p-4 md:p-8 pb-20 md:pb-8">{children}</main>
