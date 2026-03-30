@@ -17,12 +17,42 @@ function warnIfProductionFallback(operation: string) {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
+// ═══ Seed data files that must always return empty in production ═══
+// These files had seed/mock data in previous builds. To ensure zero mock data
+// reaches users regardless of Vercel build cache, we explicitly list files
+// that should only contain user-entered data.
+const USER_DATA_FILES = new Set([
+  "tournaments.json", "venues.json", "clubs.json", "coaches.json",
+  "flash-games.json", "partner-posts.json", "user.json",
+  "registrations.json", "leads.json", "bookings.json",
+  "booking-events.json", "payments.json", "notifications.json",
+  "slot-inventory.json", "business-hours.json", "cancellation-policies.json",
+  "court-resources.json", "notification-settings.json", "sync-jobs.json",
+  "meetups.json", "meetup-participants.json", "booking-requests.json",
+  "inquiries.json",
+]);
+
 // ═══ JSON helpers ═══
 export function readJSON(file: string): any[] {
   try {
     const p = path.join(DATA_DIR, file);
     if (!fs.existsSync(p)) return [];
-    return JSON.parse(fs.readFileSync(p, "utf-8"));
+    const raw = JSON.parse(fs.readFileSync(p, "utf-8"));
+    // If this is a user-data file but contains seed entries (id starts with known seed prefixes),
+    // filter them out. Seed entries have IDs like "t1", "v1", "fg1", "pp1", "co1", etc.
+    if (USER_DATA_FILES.has(file) && Array.isArray(raw)) {
+      const filtered = raw.filter((item: any) => {
+        if (!item.id) return true;
+        // Filter out known seed/mock ID patterns
+        if (/^(t\d+|v\d+|fg\d+|pp\d+|co\d+|cl\d+|n\d+|mnc|reg_seed)/.test(item.id)) return false;
+        // Filter out items with sourceType "manual_seed"
+        if (item.sourceType === "manual_seed") return false;
+        if (item.sourcePrimary === "seed") return false;
+        return true;
+      });
+      return filtered;
+    }
+    return raw;
   } catch { return []; }
 }
 
