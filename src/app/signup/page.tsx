@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import PasswordInput from "@/components/ui/PasswordInput";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function SignupPage() {
@@ -85,12 +86,12 @@ export default function SignupPage() {
           </div>
           <div>
             <label className="block text-xs text-text-muted mb-1.5">비밀번호 <span className="text-red-400">*</span></label>
-            <input type="password" value={form.password} onChange={e => set("password", e.target.value)} required placeholder="6자 이상" autoComplete="new-password"
+            <PasswordInput value={form.password} onChange={e => set("password", e.target.value)} required placeholder="6자 이상" autoComplete="new-password"
               className="w-full px-3 py-2.5 bg-surface border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:outline-none focus:border-brand-cyan/50" />
           </div>
           <div>
             <label className="block text-xs text-text-muted mb-1.5">비밀번호 확인 <span className="text-red-400">*</span></label>
-            <input type="password" value={form.passwordConfirm} onChange={e => set("passwordConfirm", e.target.value)} required placeholder="비밀번호 재입력" autoComplete="new-password"
+            <PasswordInput value={form.passwordConfirm} onChange={e => set("passwordConfirm", e.target.value)} required placeholder="비밀번호 재입력" autoComplete="new-password"
               className="w-full px-3 py-2.5 bg-surface border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:outline-none focus:border-brand-cyan/50" />
           </div>
           <button type="submit" disabled={loading}

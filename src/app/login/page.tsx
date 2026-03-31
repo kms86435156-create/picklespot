@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -62,7 +63,7 @@ export default function LoginPage() {
           </div>
           <div>
             <label htmlFor="password" className="block text-xs text-text-muted mb-1.5">비밀번호</label>
-            <input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
+            <PasswordInput id="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
               className="w-full px-3 py-2.5 bg-surface border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:outline-none focus:border-brand-cyan/50"
               placeholder="비밀번호 입력" />
           </div>
