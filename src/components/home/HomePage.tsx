@@ -5,6 +5,7 @@ import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import { Trophy, MapPin, Users, ArrowRight, Calendar, Star, Phone, Home, Sun, Clock, Zap } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
+import PromoBanners from "@/components/home/PromoBanners";
 
 function FadeIn({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null);
@@ -107,6 +108,9 @@ export default function HomePage(p: Props) {
         </section>
       )}
 
+      {/* ═══ 프로모션 배너 ═══ */}
+      <PromoBanners />
+
       {/* ═══ 추천 대회 ═══ */}
       {p.featuredTournaments.length > 0 && (
         <section className="py-10 md:py-14">
@@ -168,7 +172,7 @@ export default function HomePage(p: Props) {
                 ))}
               </div>
             ) : (
-              <EmptyBlock icon={<Calendar className="w-10 h-10" />} title={`${p.thisMonth}월 대회가 아직 등록되지 않았습니다`} desc="대회 정보가 등록되면 이곳에 표시됩니다." ctaLabel="대회 등록 요청하기" ctaHref="/for-clubs" />
+              <EmptyBlock icon={<Calendar className="w-10 h-10" />} title={`${p.thisMonth}월 대회가 아직 등록되지 않았습니다`} desc="대회 정보가 등록되면 이곳에 표시됩니다." ctaLabel="대회 등록 요청하기" ctaHref="/request" />
             )}
           </FadeIn>
         </div>
@@ -210,7 +214,7 @@ export default function HomePage(p: Props) {
                 ))}
               </div>
             ) : (
-              <EmptyBlock icon={<MapPin className="w-10 h-10" />} title="추천 피클볼장이 아직 없습니다" desc="전국 피클볼장 정보를 등록중입니다." ctaLabel="피클볼장 등록 요청" ctaHref="/for-clubs" />
+              <EmptyBlock icon={<MapPin className="w-10 h-10" />} title="추천 피클볼장이 아직 없습니다" desc="전국 피클볼장 정보를 등록중입니다." ctaLabel="피클볼장 등록 요청" ctaHref="/request" />
             )}
           </FadeIn>
         </div>
@@ -237,7 +241,7 @@ export default function HomePage(p: Props) {
                 ))}
               </div>
             ) : (
-              <EmptyBlock icon={<Users className="w-10 h-10" />} title="등록된 동호회가 아직 없습니다" desc="동호회를 무료로 등록하고 회원을 모집하세요." ctaLabel="동호회 등록하기" ctaHref="/for-clubs" />
+              <EmptyBlock icon={<Users className="w-10 h-10" />} title="등록된 동호회가 아직 없습니다" desc="동호회를 무료로 등록하고 회원을 모집하세요." ctaLabel="동호회 등록하기" ctaHref="/request" />
             )}
           </FadeIn>
         </div>

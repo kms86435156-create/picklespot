@@ -4,6 +4,7 @@ import { JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import ClientProviders from "@/components/layout/ClientProviders";
+import NoticeBanner from "@/components/home/NoticeBanner";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -56,7 +57,10 @@ export default function RootLayout({
       >
         <ClientProviders>
           <Navbar />
-          <main className="min-h-screen pt-14">{children}</main>
+          <div className="pt-14">
+            <NoticeBanner />
+          </div>
+          <main className="min-h-screen">{children}</main>
           <Footer />
         </ClientProviders>
       </body>

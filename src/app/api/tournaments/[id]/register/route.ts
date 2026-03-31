@@ -3,6 +3,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getTournament, getRegistrations, createRegistrationAsync } from "@/lib/db";
 import { genId } from "@/lib/csv-parser";
 
+function genRegNumber(): string {
+  const d = new Date();
+  const prefix = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `R${prefix}-${rand}`;
+}
+
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const tournament = await getTournament(params.id);
@@ -27,18 +34,24 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const maxP = Number(tournament.maxParticipants) || 0;
     const isFull = maxP > 0 && activeCount >= maxP;
 
-    // Duplicate check (JSON fallback — DB has UNIQUE constraint)
+    // Duplicate check
     const dup = existing.find((r: any) => r.playerPhone === b.playerPhone && r.status !== "cancelled" && r.status !== "rejected");
     if (dup) return NextResponse.json({ error: "이 연락처로 이미 신청되어 있습니다." }, { status: 400 });
 
+    // divisions: 복수 종목 → 콤마 구분 문자열로 저장
+    const divisions = Array.isArray(b.divisions) ? b.divisions.join(", ") : (b.divisions || b.division || "");
+
+    const regNumber = genRegNumber();
     const reg = {
       id: genId(),
+      regNumber,
       tournamentId: params.id,
       playerName: b.playerName,
       playerPhone: b.playerPhone,
       gender: b.gender || "",
-      division: b.division || "",
+      division: divisions,
       partnerName: b.partnerName || "",
+      partnerPhone: b.partnerPhone || "",
       clubName: b.clubName || "",
       level: b.level || "",
       memo: b.memo || "",
@@ -59,7 +72,10 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     return NextResponse.json({
       success: true,
       registration: reg,
+      regNumber,
       waitlisted: isFull,
+      currentCount: activeCount + (isFull ? 0 : 1),
+      maxParticipants: maxP,
       message: isFull
         ? "정원이 마감되어 대기자로 등록되었습니다."
         : "대회 신청이 완료되었습니다. 관리자 확인 후 참가가 확정됩니다.",
@@ -72,17 +88,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const registrations = await getRegistrations(params.id);
+  const active = registrations.filter((r: any) => r.status !== "cancelled" && r.status !== "rejected");
   const summary = {
-    total: registrations.length,
+    total: active.length,
     pending: registrations.filter((r: any) => r.status === "pending").length,
+    paid: registrations.filter((r: any) => r.status === "paid").length,
     approved: registrations.filter((r: any) => r.status === "approved").length,
     waitlisted: registrations.filter((r: any) => r.status === "waitlisted").length,
     byDivision: {} as Record<string, number>,
   };
-  registrations.forEach((r: any) => {
-    if (r.division && r.status !== "cancelled" && r.status !== "rejected") {
-      summary.byDivision[r.division] = (summary.byDivision[r.division] || 0) + 1;
-    }
+  active.forEach((r: any) => {
+    const divs = (r.division || "").split(/[,，]/).map((s: string) => s.trim()).filter(Boolean);
+    divs.forEach((d: string) => { summary.byDivision[d] = (summary.byDivision[d] || 0) + 1; });
   });
   return NextResponse.json(summary);
 }

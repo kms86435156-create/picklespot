@@ -38,3 +38,12 @@ next-env.d.ts
 .vercel
 
 /src/generated/prisma
+
+# uploads
+/public/uploads
+
+# test
+/test-results
+
+# admin credentials (seed locally, not in repo)
+data/admin-users.json

@@ -1,40 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
-const ADMIN_USER = process.env.ADMIN_USERNAME || "";
-const ADMIN_PASS = process.env.ADMIN_PASSWORD || "";
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || "dev-secret-change-in-production"
+);
+const COOKIE_NAME = "admin_token";
 
-export function middleware(req: NextRequest) {
-  // Only protect admin routes
+const PUBLIC_ADMIN_PATHS = ["/admin/login"];
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // /admin 경로만 보호
   if (!pathname.startsWith("/admin") && !pathname.startsWith("/api/admin")) {
     return NextResponse.next();
   }
 
-  // If no credentials configured, allow access (dev mode)
-  if (!ADMIN_USER || !ADMIN_PASS) {
+  // /admin/login과 /api/admin/auth/*는 통과
+  if (
+    PUBLIC_ADMIN_PATHS.some(p => pathname === p) ||
+    pathname.startsWith("/api/admin/auth")
+  ) {
     return NextResponse.next();
   }
 
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader || !authHeader.startsWith("Basic ")) {
-    return new NextResponse("Authentication required", {
-      status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="PBL.SYS Admin"' },
-    });
+  // JWT 쿠키 검증
+  const token = req.cookies.get(COOKIE_NAME)?.value;
+  if (!token) {
+    return redirectOrUnauth(req);
   }
 
-  const base64 = authHeader.slice(6);
-  const decoded = Buffer.from(base64, "base64").toString("utf-8");
-  const [user, pass] = decoded.split(":");
+  try {
+    const { payload } = await jwtVerify(token, JWT_SECRET);
+    if (payload.role !== "admin") {
+      return redirectOrUnauth(req);
+    }
+    return NextResponse.next();
+  } catch {
+    // 만료 또는 변조된 토큰 → 쿠키 제거
+    const res = redirectOrUnauth(req);
+    res.cookies.set(COOKIE_NAME, "", { maxAge: 0, path: "/" });
+    return res;
+  }
+}
 
-  if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
-    return new NextResponse("Invalid credentials", {
-      status: 401,
-      headers: { "WWW-Authenticate": 'Basic realm="PBL.SYS Admin"' },
-    });
+function redirectOrUnauth(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // API 요청은 JSON 401 응답
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json(
+      { error: "unauthorized", message: "관리자 로그인이 필요합니다." },
+      { status: 401 }
+    );
   }
 
-  return NextResponse.next();
+  // 페이지 요청은 로그인으로 리다이렉트
+  const loginUrl = new URL("/admin/login", req.url);
+  if (pathname !== "/admin/login") {
+    loginUrl.searchParams.set("from", pathname);
+  }
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
