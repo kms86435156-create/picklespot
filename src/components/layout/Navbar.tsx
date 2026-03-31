@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, X, User, LogOut } from "lucide-react";
+import { Menu, X, User, LogOut, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -11,15 +11,27 @@ const links = [
   { label: "대회", href: "/tournaments" },
   { label: "피클볼장", href: "/courts" },
   { label: "동호회", href: "/clubs" },
+  { label: "번개", href: "/matches" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
 
-  // admin 페이지에서는 Navbar 숨김
+  // Poll unread messages
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    function fetchUnread() {
+      fetch("/api/messages/unread").then(r => r.json()).then(d => setUnreadCount(d.count || 0)).catch(() => {});
+    }
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 10000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   if (pathname.startsWith("/admin")) return null;
 
   async function handleLogout() {
@@ -56,33 +68,50 @@ export default function Navbar() {
           })}
         </div>
 
-        {/* Right side: auth */}
+        {/* Right side: chat + auth */}
         <div className="hidden lg:flex items-center gap-2">
           {loading ? (
             <div className="w-16 h-8" />
           ) : user ? (
-            <div className="relative">
-              <button onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-colors">
-                <User className="w-4 h-4" />
-                <span className="max-w-[80px] truncate">{user.name}</span>
-              </button>
-              {userMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-ui-border rounded-lg shadow-xl z-50 py-1">
-                    <Link href="/mypage" onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-muted hover:text-white hover:bg-white/5 transition-colors">
-                      <User className="w-4 h-4" /> 마이페이지
-                    </Link>
-                    <button onClick={handleLogout}
-                      className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-text-muted hover:text-red-400 hover:bg-red-400/5 transition-colors">
-                      <LogOut className="w-4 h-4" /> 로그아웃
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <>
+              {/* Chat icon */}
+              <Link href="/messages" className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
+                <MessageCircle className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+              {/* User menu */}
+              <div className="relative">
+                <button onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-2 px-3 py-1.5 text-sm text-text-muted hover:text-white rounded-lg hover:bg-white/5 transition-colors">
+                  <User className="w-4 h-4" />
+                  <span className="max-w-[80px] truncate">{user.name}</span>
+                </button>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 w-44 bg-surface border border-ui-border rounded-lg shadow-xl z-50 py-1">
+                      <Link href="/mypage" onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-muted hover:text-white hover:bg-white/5 transition-colors">
+                        <User className="w-4 h-4" /> 마이페이지
+                      </Link>
+                      <Link href="/messages" onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-muted hover:text-white hover:bg-white/5 transition-colors">
+                        <MessageCircle className="w-4 h-4" /> 메시지
+                        {unreadCount > 0 && <span className="ml-auto text-[10px] text-red-400 font-bold">{unreadCount}</span>}
+                      </Link>
+                      <button onClick={handleLogout}
+                        className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-text-muted hover:text-red-400 hover:bg-red-400/5 transition-colors">
+                        <LogOut className="w-4 h-4" /> 로그아웃
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <Link href="/login" className="px-3 py-1.5 text-sm text-text-muted hover:text-white transition-colors">
@@ -96,10 +125,22 @@ export default function Navbar() {
         </div>
 
         {/* Mobile hamburger */}
-        <button className="lg:hidden text-text-main p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
-          onClick={() => setOpen(!open)} aria-label="메뉴 열기">
-          {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
+        <div className="lg:hidden flex items-center gap-1">
+          {user && (
+            <Link href="/messages" className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
+              <MessageCircle className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
+          <button className="text-text-main p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+            onClick={() => setOpen(!open)} aria-label="메뉴 열기">
+            {open ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -122,6 +163,11 @@ export default function Navbar() {
               <div className="border-t border-ui-border my-2" />
               {user ? (
                 <>
+                  <Link href="/messages" onClick={() => setOpen(false)}
+                    className="py-3 px-3 text-base text-text-muted hover:text-white flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4" /> 메시지
+                    {unreadCount > 0 && <span className="text-xs text-red-400 font-bold ml-1">{unreadCount}</span>}
+                  </Link>
                   <Link href="/mypage" onClick={() => setOpen(false)}
                     className="py-3 px-3 text-base text-text-muted hover:text-white flex items-center gap-2">
                     <User className="w-4 h-4" /> {user.name}

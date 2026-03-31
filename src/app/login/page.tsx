@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import PasswordInput from "@/components/ui/PasswordInput";
 
-function LoginForm() {
+export default function LoginPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/";
   const { refresh } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function getFrom() {
+    if (typeof window === "undefined") return "/";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("from") || "/";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,7 +38,7 @@ function LoginForm() {
         return;
       }
       await refresh();
-      router.push(from);
+      router.push(getFrom());
       router.refresh();
     } catch {
       setError("서버에 연결할 수 없습니다.");
@@ -42,6 +46,8 @@ function LoginForm() {
       setLoading(false);
     }
   }
+
+  const from = getFrom();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
@@ -81,27 +87,5 @@ function LoginForm() {
         </p>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white">로그인</h1>
-            <p className="text-sm text-text-muted mt-1">PBL.SYS 계정으로 로그인하세요</p>
-          </div>
-          <div className="space-y-4">
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[42px] bg-brand-cyan/20 rounded-lg animate-pulse" />
-          </div>
-        </div>
-      </div>
-    }>
-      <LoginForm />
-    </Suspense>
   );
 }

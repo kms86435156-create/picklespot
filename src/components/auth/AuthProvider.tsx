@@ -2,11 +2,19 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 
-interface UserInfo {
+export interface UserInfo {
   id: string;
   email: string;
   name: string;
   role: string;
+  phone?: string;
+  region?: string;
+  skillLevel?: string;
+  preferredTimes?: string;
+  playStyle?: string;
+  onboardingCompleted?: boolean;
+  clubName?: string;
+  createdAt?: string;
 }
 
 interface AuthContextType {

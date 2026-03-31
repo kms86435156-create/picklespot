@@ -1,15 +1,13 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useAuth } from "@/components/auth/AuthProvider";
 
-function SignupForm() {
+export default function SignupPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const from = searchParams.get("from") || "/";
   const { refresh } = useAuth();
 
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", passwordConfirm: "" });
@@ -17,6 +15,12 @@ function SignupForm() {
   const [loading, setLoading] = useState(false);
 
   function set(key: string, val: string) { setForm(prev => ({ ...prev, [key]: val })); }
+
+  function getFrom() {
+    if (typeof window === "undefined") return "/";
+    const params = new URLSearchParams(window.location.search);
+    return params.get("from") || "/";
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,7 +52,7 @@ function SignupForm() {
         return;
       }
       await refresh();
-      router.push(from);
+      router.push("/onboarding");
       router.refresh();
     } catch {
       setError("서버에 연결할 수 없습니다.");
@@ -56,6 +60,8 @@ function SignupForm() {
       setLoading(false);
     }
   }
+
+  const from = getFrom();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
@@ -117,30 +123,5 @@ function SignupForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function SignupPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white">회원가입</h1>
-            <p className="text-sm text-text-muted mt-1">PBL.SYS에 가입하고 피클볼을 즐기세요</p>
-          </div>
-          <div className="space-y-4">
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
-            <div className="h-[42px] bg-brand-cyan/20 rounded-lg animate-pulse" />
-          </div>
-        </div>
-      </div>
-    }>
-      <SignupForm />
-    </Suspense>
   );
 }

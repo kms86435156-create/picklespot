@@ -6,6 +6,8 @@ import { useRef } from "react";
 import { Trophy, MapPin, Users, ArrowRight, Calendar, Star, Phone, Home, Sun, Clock, Zap } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
 import PromoBanners from "@/components/home/PromoBanners";
+import KakaoMap from "@/components/map/KakaoMap";
+import type { MapPin as MapPinType } from "@/components/map/KakaoMap";
 
 function FadeIn({ children, className = "", delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const ref = useRef(null);
@@ -196,23 +198,40 @@ export default function HomePage(p: Props) {
               </div>
             ) : null}
             {p.featuredVenues.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {p.featuredVenues.map(v => (
-                  <Link key={v.id} href={`/courts/${v.id}`} className="block">
-                    <div className="bg-surface border border-ui-border rounded-lg p-4 hover:border-brand-cyan/30 transition-all group h-full">
-                      <h3 className="font-bold text-sm text-white group-hover:text-brand-cyan transition-colors mb-2">{v.name}</h3>
-                      <div className="text-xs text-text-muted space-y-1">
-                        <div className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /><span className="truncate">{v.roadAddress || v.address || v.region}</span></div>
-                        <div className="flex items-center gap-1.5">
-                          {v.indoorOutdoor === "실내" || v.type === "indoor" ? <Home className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
-                          <span>코트 {v.courtCount}면 · {v.indoorOutdoor || (v.type === "indoor" ? "실내" : "실외")}</span>
+              <>
+                {/* Mini Map */}
+                <div className="mb-6">
+                  <KakaoMap
+                    pins={p.featuredVenues.filter((v: any) => v.lat && v.lng).map((v: any) => ({
+                      id: v.id, lat: v.lat, lng: v.lng, label: v.name,
+                      sub: `${v.indoorOutdoor || "실내"} · 코트 ${v.courtCount}면`,
+                      type: "venue" as const,
+                    })) as MapPinType[]}
+                    height="280px"
+                    level={10}
+                  />
+                  <div className="text-right mt-2">
+                    <Link href="/courts" className="text-xs text-brand-cyan hover:underline">지도에서 더 보기 →</Link>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {p.featuredVenues.map((v: any) => (
+                    <Link key={v.id} href={`/courts/${v.id}`} className="block">
+                      <div className="bg-surface border border-ui-border rounded-lg p-4 hover:border-brand-cyan/30 transition-all group h-full">
+                        <h3 className="font-bold text-sm text-white group-hover:text-brand-cyan transition-colors mb-2">{v.name}</h3>
+                        <div className="text-xs text-text-muted space-y-1">
+                          <div className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /><span className="truncate">{v.roadAddress || v.address || v.region}</span></div>
+                          <div className="flex items-center gap-1.5">
+                            {v.indoorOutdoor === "실내" || v.type === "indoor" ? <Home className="w-3 h-3" /> : <Sun className="w-3 h-3" />}
+                            <span>코트 {v.courtCount}면 · {v.indoorOutdoor || (v.type === "indoor" ? "실내" : "실외")}</span>
+                          </div>
+                          {v.phone && <div className="flex items-center gap-1.5"><Phone className="w-3 h-3" /><span>{v.phone}</span></div>}
                         </div>
-                        {v.phone && <div className="flex items-center gap-1.5"><Phone className="w-3 h-3" /><span>{v.phone}</span></div>}
                       </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
             ) : (
               <EmptyBlock icon={<MapPin className="w-10 h-10" />} title="추천 피클볼장이 아직 없습니다" desc="전국 피클볼장 정보를 등록중입니다." ctaLabel="피클볼장 등록 요청" ctaHref="/courts/register" />
             )}

@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { MapPin, Phone, Clock, Car, Home, ExternalLink, ArrowLeft, Trophy, ChevronRight } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
+import KakaoMap from "@/components/map/KakaoMap";
+import DirectionsButton from "@/components/map/DirectionsButton";
 
 function InfoItem({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
   if (!value) return null;
@@ -55,6 +57,18 @@ export default function VenueDetailPage({ venue: v, nearbyTournaments }: { venue
                 <InfoItem icon={<ExternalLink className="w-4 h-4" />} label="지도" value="지도에서 보기" href={v.mapLink} />
               )}
             </div>
+
+            {/* Map + Directions */}
+            {v.lat && v.lng && (
+              <div className="space-y-3">
+                <KakaoMap
+                  pins={[{ id: v.id, lat: v.lat, lng: v.lng, label: v.name, sub: v.address || v.roadAddress, type: "venue" }]}
+                  height="250px"
+                  level={4}
+                />
+                <DirectionsButton lat={v.lat} lng={v.lng} name={v.name} />
+              </div>
+            )}
 
             {/* Amenities */}
             <div className="bg-surface border border-ui-border rounded-lg p-5">

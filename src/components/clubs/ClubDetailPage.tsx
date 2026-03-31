@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Users, MapPin, Phone, MessageCircle, ExternalLink, ArrowLeft, Calendar } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
+import ChatButton from "@/components/chat/ChatButton";
 
 function InfoItem({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
   if (!value) return null;
@@ -92,6 +93,11 @@ export default function ClubDetailPage({ club: c }: { club: any }) {
                   </a>
                 )}
               </div>
+
+              {/* Chat with club contact — requires ownerId to be set on club */}
+              {c.ownerId && (
+                <ChatButton targetUserId={c.ownerId} context={`동호회: ${c.name}`} label="운영자에게 문의" />
+              )}
 
               <OrganizerCTA variant="sidebar" context="club" />
             </div>

@@ -15,6 +15,10 @@ export interface User {
   clubName: string;
   region: string;
   organizerNote: string;
+  skillLevel: string; // "입문" | "초급" | "중급" | "상급" | ""
+  preferredTimes: string; // JSON array or comma-separated
+  playStyle: string; // "복식" | "단식" | "둘다" | ""
+  onboardingCompleted: boolean;
   passwordHash: string;
   createdAt: string;
   updatedAt: string;
@@ -79,6 +83,10 @@ export async function createUser(
     clubName: opts?.clubName || "",
     region: opts?.region || "",
     organizerNote: opts?.organizerNote || "",
+    skillLevel: "",
+    preferredTimes: "",
+    playStyle: "",
+    onboardingCompleted: false,
     passwordHash: await hashPassword(password),
     createdAt: now,
     updatedAt: now,
@@ -97,4 +105,25 @@ export async function createUser(
   }
 
   return user;
+}
+
+export async function updateUser(id: string, updates: Partial<Omit<User, "id" | "email" | "passwordHash" | "createdAt">>): Promise<User | null> {
+  const now = new Date().toISOString();
+  const safeUpdates = { ...updates, updatedAt: now };
+
+  if (isSupabaseEnabled && supabaseAdmin) {
+    const snaked = toSnake(safeUpdates);
+    delete snaked.id;
+    delete snaked.created_at;
+    const { data, error } = await supabaseAdmin.from(TABLE).update(snaked).eq("id", id).select().single();
+    if (error) throw new Error(error.message);
+    return data ? toCamel(data) : null;
+  }
+
+  const users = readJSON(FILE);
+  const idx = users.findIndex((u: any) => u.id === id);
+  if (idx === -1) return null;
+  users[idx] = { ...users[idx], ...safeUpdates };
+  writeJSON(FILE, users);
+  return users[idx];
 }

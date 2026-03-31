@@ -22,15 +22,15 @@ const DATA_DIR = path.join(process.cwd(), "data");
 // reaches users regardless of Vercel build cache, we explicitly list files
 // that should only contain user-entered data.
 // Files that should return empty in production to prevent stale seed data.
-// venues.json is excluded because it now contains verified real court data.
+// venues.json, tournaments.json, clubs.json are excluded because they now contain curated seed data.
 const USER_DATA_FILES = new Set([
-  "tournaments.json", "clubs.json", "coaches.json",
+  "coaches.json",
   "flash-games.json", "partner-posts.json", "user.json",
   "registrations.json", "leads.json", "bookings.json",
   "booking-events.json", "payments.json", "notifications.json",
   "slot-inventory.json", "business-hours.json", "cancellation-policies.json",
   "court-resources.json", "notification-settings.json", "sync-jobs.json",
-  "meetups.json", "meetup-participants.json", "booking-requests.json",
+  "booking-requests.json",
   "inquiries.json",
 ]);
 
@@ -171,6 +171,10 @@ const TABLE_MAP: Record<string, string> = {
   "meetups.json": "meetups",
   "meetup-participants.json": "meetup_participants",
   "booking-requests.json": "booking_requests",
+  "conversations.json": "conversations",
+  "messages.json": "messages",
+  "reports.json": "reports",
+  "blocks.json": "blocks",
 };
 
 export function createEntity(file: string, entity: any) {
@@ -489,4 +493,182 @@ export async function createBookingRequest(request: any) {
   data.push(request);
   writeJSON("booking-requests.json", data);
   return request;
+}
+
+// ═══════════════════════════════
+// Chat: Conversations & Messages
+// ═══════════════════════════════
+
+/** Find or create a 1:1 conversation between two users */
+export async function findOrCreateConversation(userA: string, userB: string, context?: string): Promise<any> {
+  const sorted = [userA, userB].sort();
+
+  if (isSupabaseEnabled) {
+    // Check existing
+    const { data: existing } = await db!.from("conversations")
+      .select("*")
+      .contains("participant_ids", sorted)
+      .single();
+    if (existing) return toCamel(existing);
+
+    // Create new
+    const conv = {
+      id: `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      participant_ids: sorted,
+      context: context || "",
+      last_message: "",
+      last_message_at: new Date().toISOString(),
+      created_at: new Date().toISOString(),
+    };
+    const { data, error } = await db!.from("conversations").insert(conv).select().single();
+    if (error) throw new Error(error.message);
+    return data ? toCamel(data) : conv;
+  }
+
+  // JSON fallback
+  const convs = readJSON("conversations.json");
+  const existing = convs.find((c: any) => {
+    const ids = (c.participantIds || []).sort();
+    return ids[0] === sorted[0] && ids[1] === sorted[1];
+  });
+  if (existing) return existing;
+
+  const conv = {
+    id: `conv_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    participantIds: sorted,
+    context: context || "",
+    lastMessage: "",
+    lastMessageAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  };
+  convs.push(conv);
+  writeJSON("conversations.json", convs);
+  return conv;
+}
+
+/** Get conversations for a user */
+export async function getUserConversations(userId: string): Promise<any[]> {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("conversations")
+      .select("*")
+      .contains("participant_ids", [userId])
+      .order("last_message_at", { ascending: false });
+    return (data || []).map(toCamel);
+  }
+  return readJSON("conversations.json")
+    .filter((c: any) => (c.participantIds || []).includes(userId))
+    .sort((a: any, b: any) => (b.lastMessageAt || "").localeCompare(a.lastMessageAt || ""));
+}
+
+/** Get messages for a conversation */
+export async function getMessages(conversationId: string, limit = 100): Promise<any[]> {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+      .limit(limit);
+    return (data || []).map(toCamel);
+  }
+  return readJSON("messages.json")
+    .filter((m: any) => m.conversationId === conversationId)
+    .sort((a: any, b: any) => (a.createdAt || "").localeCompare(b.createdAt || ""))
+    .slice(-limit);
+}
+
+/** Send a message */
+export async function sendMessage(msg: { conversationId: string; senderId: string; senderName: string; text: string }): Promise<any> {
+  const message = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    conversationId: msg.conversationId,
+    senderId: msg.senderId,
+    senderName: msg.senderName,
+    text: msg.text,
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+
+  if (isSupabaseEnabled) {
+    const snaked = toSnake(message);
+    const { data, error } = await db!.from("messages").insert(snaked).select().single();
+    if (error) throw new Error(error.message);
+    // Update conversation lastMessage
+    await db!.from("conversations").update({
+      last_message: msg.text.slice(0, 100),
+      last_message_at: message.createdAt,
+    }).eq("id", msg.conversationId);
+    return data ? toCamel(data) : message;
+  }
+
+  const messages = readJSON("messages.json");
+  messages.push(message);
+  writeJSON("messages.json", messages);
+
+  // Update conversation
+  const convs = readJSON("conversations.json");
+  const idx = convs.findIndex((c: any) => c.id === msg.conversationId);
+  if (idx !== -1) {
+    convs[idx].lastMessage = msg.text.slice(0, 100);
+    convs[idx].lastMessageAt = message.createdAt;
+    writeJSON("conversations.json", convs);
+  }
+
+  return message;
+}
+
+/** Mark messages as read */
+export async function markMessagesRead(conversationId: string, userId: string): Promise<void> {
+  if (isSupabaseEnabled) {
+    await db!.from("messages")
+      .update({ is_read: true })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", userId)
+      .eq("is_read", false);
+    return;
+  }
+  const messages = readJSON("messages.json");
+  let changed = false;
+  for (const m of messages) {
+    if (m.conversationId === conversationId && m.senderId !== userId && !m.isRead) {
+      m.isRead = true;
+      changed = true;
+    }
+  }
+  if (changed) writeJSON("messages.json", messages);
+}
+
+/** Count unread messages for a user */
+export async function getUnreadCount(userId: string): Promise<number> {
+  const convs = await getUserConversations(userId);
+  if (convs.length === 0) return 0;
+
+  if (isSupabaseEnabled) {
+    let total = 0;
+    for (const c of convs) {
+      const { count } = await db!.from("messages")
+        .select("id", { count: "exact", head: true })
+        .eq("conversation_id", c.id)
+        .neq("sender_id", userId)
+        .eq("is_read", false);
+      total += count || 0;
+    }
+    return total;
+  }
+
+  const allMessages = readJSON("messages.json");
+  const convIds = new Set(convs.map((c: any) => c.id));
+  return allMessages.filter((m: any) =>
+    convIds.has(m.conversationId) && m.senderId !== userId && !m.isRead
+  ).length;
+}
+
+/** Get blocked user IDs for a user */
+export async function getBlockedUsers(userId: string): Promise<string[]> {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("blocks").select("blocked_id").eq("blocker_id", userId);
+    return (data || []).map((b: any) => b.blocked_id);
+  }
+  return readJSON("blocks.json")
+    .filter((b: any) => b.blockerId === userId)
+    .map((b: any) => b.blockedId);
 }

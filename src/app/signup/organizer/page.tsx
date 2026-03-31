@@ -48,7 +48,7 @@ export default function OrganizerSignupPage() {
       const data = await res.json();
       if (!res.ok) { setError(data.error || "회원가입에 실패했습니다."); return; }
       await refresh();
-      router.push("/mypage");
+      router.push("/onboarding");
       router.refresh();
     } catch { setError("서버에 연결할 수 없습니다."); }
     finally { setLoading(false); }
