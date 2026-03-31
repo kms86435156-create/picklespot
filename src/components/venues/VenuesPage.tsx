@@ -10,7 +10,7 @@ const TYPES = [
   { value: "", label: "전체" },
   { value: "실내", label: "실내" },
   { value: "실외", label: "실외" },
-  { value: "실내+실외", label: "실내+실외" },
+  { value: "겸용", label: "겸용" },
 ];
 
 export default function VenuesPage({ venues }: { venues: any[] }) {
@@ -22,10 +22,24 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
 
   const filtered = useMemo(() => {
     const result = venues.filter(v => {
-      if (region !== "전체" && v.region !== region) return false;
-      if (typeFilter && v.indoorOutdoor !== typeFilter && v.type !== (typeFilter === "실내" ? "indoor" : typeFilter === "실외" ? "outdoor" : "both")) return false;
-      if (parkingOnly && !v.parkingAvailable && !v.hasParking) return false;
-      if (keyword && !v.name?.includes(keyword) && !v.address?.includes(keyword) && !v.roadAddress?.includes(keyword)) return false;
+      // 지역 필터
+      if (region !== "전체" && v.region !== region && v.regionDepth1 !== region) return false;
+      // 실내/실외 필터
+      if (typeFilter) {
+        const vType = (v.indoorOutdoor || v.courtType || v.type || "").toLowerCase();
+        const match = vType === typeFilter ||
+          (typeFilter === "실내" && (vType === "indoor" || vType.includes("실내"))) ||
+          (typeFilter === "실외" && (vType === "outdoor" || vType.includes("실외"))) ||
+          (typeFilter === "겸용" && (vType === "both" || vType.includes("겸용") || vType.includes("실내+실외")));
+        if (!match) return false;
+      }
+      // 주차 필터
+      if (parkingOnly && !v.parkingAvailable && !v.hasParking && !(v.amenities || "").includes("주차")) return false;
+      // 검색어
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        if (!v.name?.toLowerCase().includes(kw) && !v.address?.toLowerCase().includes(kw) && !v.roadAddress?.toLowerCase().includes(kw) && !v.addressRoad?.toLowerCase().includes(kw)) return false;
+      }
       return true;
     });
     if (sortBy === "courtCount") result.sort((a, b) => (b.courtCount || 0) - (a.courtCount || 0));
@@ -55,8 +69,8 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
             </div>
           </div>
           <div className="flex gap-6 mt-4 text-sm">
-            <span><span className="text-brand-cyan font-bold text-lg">{venues.length}</span> <span className="text-text-muted">전체 장소</span></span>
-            <span><span className="text-green-400 font-bold text-lg">{venues.filter(v => v.isFeatured).length}</span> <span className="text-text-muted">추천 장소</span></span>
+            <span><span className="text-brand-cyan font-bold text-lg">{filtered.length}</span> <span className="text-text-muted">{region === "전체" && !typeFilter && !parkingOnly && !keyword ? "전체 장소" : "검색 결과"}</span></span>
+            <span><span className="text-text-muted/60 font-bold text-lg">{venues.length}</span> <span className="text-text-muted">전체 등록</span></span>
           </div>
           {/* Region quick pills */}
           <div className="flex gap-2 mt-4 overflow-x-auto pb-1">
@@ -132,8 +146,12 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
           {filtered.length === 0 ? (
             <div className="bg-surface border border-dashed border-ui-border rounded-lg p-12 text-center">
               <MapPin className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
-              <p className="text-text-muted font-medium mb-1">등록된 피클볼장이 없습니다</p>
-              <p className="text-xs text-text-muted/70 mb-4">피클볼장 정보가 등록되면 이곳에 표시됩니다.</p>
+              <p className="text-text-muted font-medium mb-1">
+                {venues.length === 0 ? "등록된 피클볼장이 없습니다" : "해당 조건의 피클볼장이 없습니다"}
+              </p>
+              <p className="text-xs text-text-muted/70 mb-4">
+                {venues.length === 0 ? "피클볼장 정보가 등록되면 이곳에 표시됩니다." : "다른 조건으로 검색해보세요."}
+              </p>
               <Link href="/request?type=court" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
                 장소 등록 요청하기 <ArrowRight className="w-3 h-3" />
               </Link>
