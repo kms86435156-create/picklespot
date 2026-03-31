@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MapPin, Calendar, Users, Phone, Clock, ArrowLeft, ArrowRight, CreditCard, ExternalLink } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
 import RegistrationFormModal from "./RegistrationFormModal";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 function daysUntil(d: string) { if (!d) return 999; const ms = new Date(d).getTime(); return isNaN(ms) ? 999 : Math.ceil((ms - Date.now()) / 86400000); }
 
@@ -23,8 +25,18 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 export default function TournamentDetailPage({ tournament: t, similarTournaments, matchingVenue }: {
   tournament: any; similarTournaments: any[]; matchingVenue?: any;
 }) {
+  const router = useRouter();
+  const { user } = useAuth();
   const [showRegForm, setShowRegForm] = useState(false);
   const dl = daysUntil(t.registrationDeadline || t.startDate || "");
+
+  function handleRegister() {
+    if (!user) {
+      router.push(`/login?from=/tournaments/${t.id}`);
+      return;
+    }
+    setShowRegForm(true);
+  }
   const isOpen = (t.status === "open" || t.status === "draft") && dl > 0;
   const isClosing = isOpen && dl <= 7;
   const maxP = Number(t.maxParticipants) || 0;
@@ -140,7 +152,7 @@ export default function TournamentDetailPage({ tournament: t, similarTournaments
                 </div>
                 {isOpen ? (
                   <button
-                    onClick={() => setShowRegForm(true)}
+                    onClick={handleRegister}
                     className="w-full py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors"
                   >
                     {isClosing ? `마감임박! 지금 신청 (D-${dl})` : "대회 신청하기"}
@@ -178,7 +190,7 @@ export default function TournamentDetailPage({ tournament: t, similarTournaments
       {/* Mobile sticky CTA */}
       {isOpen && (
         <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-ui-border p-3 z-40">
-          <button onClick={() => setShowRegForm(true)} className="w-full py-3 bg-brand-cyan text-dark font-bold text-sm rounded">
+          <button onClick={handleRegister} className="w-full py-3 bg-brand-cyan text-dark font-bold text-sm rounded">
             대회 신청하기 · ₩{fee.toLocaleString()}
           </button>
         </div>

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle, Send } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 const REGIONS = [
   "서울", "경기", "인천", "부산", "대구", "광주", "대전", "울산", "세종",
@@ -15,11 +17,30 @@ const REQUEST_TYPES = [
 ];
 
 export default function RequestPage() {
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [type, setType] = useState("");
   const [form, setForm] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login?from=/request");
+    }
+  }, [user, authLoading, router]);
+
+  // 로그인한 사용자 정보를 제출자 필드에 자동 채움
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        submitterName: prev.submitterName || user.name,
+        submitterContact: prev.submitterContact || "",
+      }));
+    }
+  }, [user]);
 
   function setField(key: string, value: string) {
     setForm(prev => ({ ...prev, [key]: value }));
