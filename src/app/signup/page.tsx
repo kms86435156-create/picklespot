@@ -106,6 +106,15 @@ export default function SignupPage() {
             로그인
           </Link>
         </p>
+
+        {/* 운영자 가입 배너 */}
+        <div className="mt-8 pt-6 border-t border-ui-border">
+          <Link href="/signup/organizer" className="block bg-brand-cyan/5 border border-brand-cyan/20 rounded-lg p-4 hover:bg-brand-cyan/10 transition-colors group">
+            <p className="text-sm font-bold text-white group-hover:text-brand-cyan transition-colors">동호회/대회 운영자이신가요?</p>
+            <p className="text-xs text-text-muted mt-0.5">운영자로 가입하면 동호회 관리, 대회 접수 등 추가 기능을 사용할 수 있습니다.</p>
+            <span className="text-xs text-brand-cyan font-medium mt-2 inline-block">운영자로 가입하기 →</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

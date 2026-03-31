@@ -12,7 +12,7 @@ export default function Footer() {
           <Link href="/courts" className="hover:text-brand-cyan transition-colors">피클볼장</Link>
           <Link href="/clubs" className="hover:text-brand-cyan transition-colors">동호회</Link>
           <Link href="/learn" className="hover:text-brand-cyan transition-colors">배우기</Link>
-          <Link href="/for-clubs" className="hover:text-brand-cyan transition-colors">운영자 등록</Link>
+          <Link href="/signup/organizer" className="hover:text-brand-cyan transition-colors">운영자 가입</Link>
         </div>
 
         {/* Status */}

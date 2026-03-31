@@ -11,7 +11,10 @@ export interface User {
   email: string;
   name: string;
   phone: string;
-  role: string;
+  role: string; // "user" | "organizer"
+  clubName: string;
+  region: string;
+  organizerNote: string;
   passwordHash: string;
   createdAt: string;
   updatedAt: string;
@@ -59,7 +62,10 @@ export async function authenticateUser(email: string, password: string): Promise
   return valid ? user : null;
 }
 
-export async function createUser(email: string, password: string, name: string, phone: string): Promise<User> {
+export async function createUser(
+  email: string, password: string, name: string, phone: string,
+  opts?: { role?: string; clubName?: string; region?: string; organizerNote?: string }
+): Promise<User> {
   const existing = await findUserByEmail(email);
   if (existing) throw new Error("이미 가입된 이메일입니다.");
 
@@ -69,7 +75,10 @@ export async function createUser(email: string, password: string, name: string, 
     email: email.toLowerCase(),
     name,
     phone,
-    role: "user",
+    role: opts?.role || "user",
+    clubName: opts?.clubName || "",
+    region: opts?.region || "",
+    organizerNote: opts?.organizerNote || "",
     passwordHash: await hashPassword(password),
     createdAt: now,
     updatedAt: now,
