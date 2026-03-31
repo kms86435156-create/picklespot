@@ -21,8 +21,10 @@ const DATA_DIR = path.join(process.cwd(), "data");
 // These files had seed/mock data in previous builds. To ensure zero mock data
 // reaches users regardless of Vercel build cache, we explicitly list files
 // that should only contain user-entered data.
+// Files that should return empty in production to prevent stale seed data.
+// venues.json is excluded because it now contains verified real court data.
 const USER_DATA_FILES = new Set([
-  "tournaments.json", "venues.json", "clubs.json", "coaches.json",
+  "tournaments.json", "clubs.json", "coaches.json",
   "flash-games.json", "partner-posts.json", "user.json",
   "registrations.json", "leads.json", "bookings.json",
   "booking-events.json", "payments.json", "notifications.json",
