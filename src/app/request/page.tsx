@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, Send } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -18,8 +18,9 @@ const REQUEST_TYPES = [
 
 export default function RequestPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  const [type, setType] = useState("");
+  const [type, setType] = useState(searchParams.get("type") || "");
   const [form, setForm] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);

@@ -134,7 +134,7 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
               <MapPin className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
               <p className="text-text-muted font-medium mb-1">등록된 피클볼장이 없습니다</p>
               <p className="text-xs text-text-muted/70 mb-4">피클볼장 정보가 등록되면 이곳에 표시됩니다.</p>
-              <Link href="/for-clubs" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
+              <Link href="/request?type=court" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
                 장소 등록 요청하기 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>

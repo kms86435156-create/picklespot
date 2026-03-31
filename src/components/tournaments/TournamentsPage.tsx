@@ -259,8 +259,8 @@ export default function TournamentsPage({ tournaments }: { tournaments: any[] })
         <section className="bg-gradient-to-r from-brand-cyan/10 to-brand-red/5 border border-brand-cyan/20 rounded-lg p-6 md:p-8 text-center">
           <h2 className="text-lg font-bold text-white mb-2">대회를 개최하시나요?</h2>
           <p className="text-sm text-text-muted mb-4">PBL.SYS로 대회 접수, 참가자 관리, 결과 기록까지 한 곳에서 운영하세요.</p>
-          <Link href="/for-clubs" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
-            대회 운영 문의하기 <ArrowRight className="w-4 h-4" />
+          <Link href="/request?type=tournament" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
+            대회 등록 요청하기 <ArrowRight className="w-4 h-4" />
           </Link>
         </section>
       </div>
