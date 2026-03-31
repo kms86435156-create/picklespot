@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Trophy, MapPin, Calendar, Search, Users, Clock, ArrowRight, Star } from "lucide-react";
+import { Trophy, MapPin, Calendar, Search, Users, Clock, ArrowRight, Star, Mail, Bell } from "lucide-react";
 
 const REGIONS = ["전체", "서울", "경기", "인천", "부산", "대구", "대전", "광주", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
 const STATUSES = [
@@ -214,14 +214,7 @@ export default function TournamentsPage({ tournaments }: { tournaments: any[] })
         <section>
           <p className="text-sm text-text-muted mb-4">{filtered.length}개 대회</p>
           {filtered.length === 0 ? (
-            <div className="bg-surface border border-dashed border-ui-border rounded-lg p-12 text-center">
-              <Trophy className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
-              <p className="text-text-muted font-medium mb-1">조건에 맞는 대회가 없습니다</p>
-              <p className="text-xs text-text-muted/70 mb-4">필터를 변경하거나, 아래에서 대회를 등록해보세요.</p>
-              <Link href="/request" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
-                대회 등록 요청하기 <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
+            <TournamentEmptyState hasData={tournaments.length > 0} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filtered.map((t, i) => {
@@ -259,11 +252,84 @@ export default function TournamentsPage({ tournaments }: { tournaments: any[] })
         <section className="bg-gradient-to-r from-brand-cyan/10 to-brand-red/5 border border-brand-cyan/20 rounded-lg p-6 md:p-8 text-center">
           <h2 className="text-lg font-bold text-white mb-2">대회를 개최하시나요?</h2>
           <p className="text-sm text-text-muted mb-4">PBL.SYS로 대회 접수, 참가자 관리, 결과 기록까지 한 곳에서 운영하세요.</p>
-          <Link href="/request?type=tournament" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
+          <Link href="/tournaments/register" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
             대회 등록 요청하기 <ArrowRight className="w-4 h-4" />
           </Link>
         </section>
       </div>
+    </div>
+  );
+}
+
+function TournamentEmptyState({ hasData }: { hasData: boolean }) {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleNotify(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email) return;
+    setSubmitting(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contactName: email, clubName: "", region: "", phone: "", memo: "대회 알림 신청", currentProblem: "tournament_notification" }),
+      });
+      setSubmitted(true);
+    } catch {
+      // silently fail
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="bg-surface border border-dashed border-ui-border rounded-lg p-10 text-center">
+      <Trophy className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
+      <p className="text-text-muted font-medium mb-1">
+        {hasData ? "해당 조건에 맞는 대회가 없습니다" : "현재 등록된 대회가 없습니다"}
+      </p>
+      <p className="text-xs text-text-muted/70 mb-6">
+        {hasData ? "다른 조건으로 검색하거나, 대회를 등록해보세요." : "대회 정보가 등록되면 이곳에 표시됩니다."}
+      </p>
+
+      {!hasData && (
+        <div className="max-w-sm mx-auto mb-6">
+          {submitted ? (
+            <div className="flex items-center justify-center gap-2 text-sm text-green-400 bg-green-400/10 border border-green-400/20 rounded-lg px-4 py-3">
+              <Bell className="w-4 h-4" />
+              알림 신청이 완료되었습니다!
+            </div>
+          ) : (
+            <form onSubmit={handleNotify} className="flex gap-2">
+              <div className="relative flex-1">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="이메일을 입력하세요"
+                  required
+                  className="w-full pl-10 pr-3 py-2.5 bg-dark border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:border-brand-cyan focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="shrink-0 px-4 py-2.5 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 disabled:opacity-50 transition-colors"
+              >
+                {submitting ? "..." : "대회 알림 신청"}
+              </button>
+            </form>
+          )}
+          <p className="text-[10px] text-text-muted/50 mt-2">대회 정보가 등록되면 이메일로 알려드립니다</p>
+        </div>
+      )}
+
+      <Link href="/tournaments/register" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
+        대회 등록 요청하기 <ArrowRight className="w-3 h-3" />
+      </Link>
     </div>
   );
 }

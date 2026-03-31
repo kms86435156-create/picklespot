@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /api/admin
 
-Sitemap: https://pickleball-platform.vercel.app/sitemap.xml
+Sitemap: https://pickleball-platform-brown.vercel.app/sitemap.xml

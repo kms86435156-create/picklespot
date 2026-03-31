@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
 import {
@@ -76,11 +76,7 @@ const steps = [
 /* ═══════════════════════════════
    사례 + FAQ
    ═══════════════════════════════ */
-const testimonials = [
-  { name: "김OO 회장", club: "강남피클러스 (회원 45명)", text: "토요일 대회 접수를 카톡으로 받다가 바꿨는데, 접수 관련 질문이 90% 줄었어요. 대회 전날 밤에 명단 정리하던 시간이 사라졌습니다." },
-  { name: "이OO 총무", club: "판교PB클럽 (회원 32명)", text: "입금 확인 때문에 매번 스트레스였는데, 이제 신청 현황이 실시간으로 보이니까 편합니다. 회원들도 좋아해요." },
-  { name: "박OO 대표", club: "해운대피클볼 (회원 60명)", text: "동호회 소개 페이지 만들고 나서 네이버 검색으로 들어오는 신입 문의가 진짜 2배 늘었어요." },
-];
+const testimonials: { name: string; club: string; text: string }[] = [];
 
 const faqs = [
   { q: "정말 무료인가요?", a: "네, 런칭 파트너 동호회는 모든 기능을 무료로 사용하실 수 있습니다. 향후 유료 기능이 추가되더라도 기본 운영 기능은 계속 무료입니다." },
@@ -103,6 +99,21 @@ export default function ForClubsPage() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [stats, setStats] = useState<{ clubs: number; venues: number; tournaments: number } | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/clubs").then(r => r.json()).catch(() => []),
+      fetch("/api/venues").then(r => r.json()).catch(() => []),
+      fetch("/api/tournaments").then(r => r.json()).catch(() => []),
+    ]).then(([clubs, venues, tournaments]) => {
+      setStats({
+        clubs: Array.isArray(clubs) ? clubs.length : 0,
+        venues: Array.isArray(venues) ? venues.length : 0,
+        tournaments: Array.isArray(tournaments) ? tournaments.length : 0,
+      });
+    });
+  }, []);
 
   const set = (key: string, val: string) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -160,8 +171,11 @@ export default function ForClubsPage() {
       <section className="border-y border-ui-border bg-surface/50">
         <div className="max-w-5xl mx-auto px-4 py-5 grid grid-cols-4 text-center">
           {[
-            { v: "25+", l: "등록 동호회" }, { v: "200+", l: "전국 피클볼장" },
-            { v: "50+", l: "대회 정보" }, { v: "₩0", l: "이용료" },
+            ...(stats && stats.clubs > 0 ? [{ v: `${stats.clubs}`, l: "등록 동호회" }] : []),
+            ...(stats && stats.venues > 0 ? [{ v: `${stats.venues}`, l: "전국 피클볼장" }] : []),
+            ...(stats && stats.tournaments > 0 ? [{ v: `${stats.tournaments}`, l: "대회 정보" }] : []),
+            { v: "₩0", l: "이용료" },
+            ...(!stats ? [{ v: "—", l: "런칭 준비중" }] : []),
           ].map(s => (
             <div key={s.l}>
               <p className="text-xl md:text-2xl font-black text-brand-cyan">{s.v}</p>
@@ -262,29 +276,41 @@ export default function ForClubsPage() {
       </section>
 
       {/* ═══ 성공 사례 ═══ */}
-      <section className="bg-surface/50 border-y border-ui-border py-16">
-        <div className="max-w-5xl mx-auto px-4">
-          <FadeIn>
-            <div className="text-center mb-10">
-              <span className="text-[11px] font-mono text-brand-cyan tracking-widest block mb-2">TESTIMONIALS</span>
-              <h2 className="text-2xl font-black text-white">이미 사용중인 동호회</h2>
-            </div>
-          </FadeIn>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <FadeIn key={t.name} delay={i * 0.1}>
-                <div className="bg-dark border border-ui-border rounded-lg p-6 h-full flex flex-col">
-                  <p className="text-sm text-text-muted leading-relaxed flex-1 mb-4">&ldquo;{t.text}&rdquo;</p>
-                  <div>
-                    <p className="text-sm font-bold text-white">{t.name}</p>
-                    <p className="text-xs text-brand-cyan">{t.club}</p>
+      {testimonials.length > 0 ? (
+        <section className="bg-surface/50 border-y border-ui-border py-16">
+          <div className="max-w-5xl mx-auto px-4">
+            <FadeIn>
+              <div className="text-center mb-10">
+                <span className="text-[11px] font-mono text-brand-cyan tracking-widest block mb-2">TESTIMONIALS</span>
+                <h2 className="text-2xl font-black text-white">이미 사용중인 동호회</h2>
+              </div>
+            </FadeIn>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {testimonials.map((t, i) => (
+                <FadeIn key={t.name} delay={i * 0.1}>
+                  <div className="bg-dark border border-ui-border rounded-lg p-6 h-full flex flex-col">
+                    <p className="text-sm text-text-muted leading-relaxed flex-1 mb-4">&ldquo;{t.text}&rdquo;</p>
+                    <div>
+                      <p className="text-sm font-bold text-white">{t.name}</p>
+                      <p className="text-xs text-brand-cyan">{t.club}</p>
+                    </div>
                   </div>
-                </div>
-              </FadeIn>
-            ))}
+                </FadeIn>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        <section className="bg-surface/50 border-y border-ui-border py-12">
+          <div className="max-w-5xl mx-auto px-4 text-center">
+            <FadeIn>
+              <span className="text-[11px] font-mono text-brand-cyan tracking-widest block mb-2">TESTIMONIALS</span>
+              <h2 className="text-xl font-black text-white mb-2">서비스 출시 후 후기가 업데이트됩니다</h2>
+              <p className="text-sm text-text-muted">런칭 파트너 동호회의 사용 후기를 곧 공개합니다.</p>
+            </FadeIn>
+          </div>
+        </section>
+      )}
 
       {/* ═══ FAQ ═══ */}
       <section className="max-w-3xl mx-auto px-4 py-16">

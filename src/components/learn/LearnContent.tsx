@@ -121,7 +121,7 @@ function LearnCard({ item }: { item: LearnItem }) {
       <p className="text-xs text-text-muted leading-relaxed mb-3">{item.description}</p>
 
       {/* 펼치기 가능한 콘텐츠 */}
-      {item.sections && (
+      {item.sections ? (
         <>
           <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-[10px] text-brand-cyan hover:underline mb-2 min-h-[32px]">
             {expanded ? "접기" : "내용 보기"}
@@ -138,6 +138,8 @@ function LearnCard({ item }: { item: LearnItem }) {
             </motion.div>
           )}
         </>
+      ) : (
+        <p className="text-[10px] text-text-muted/50 mb-2">콘텐츠 준비중입니다</p>
       )}
 
       {/* 하단 CTA */}

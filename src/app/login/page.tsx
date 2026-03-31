@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import PasswordInput from "@/components/ui/PasswordInput";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/";
@@ -81,5 +81,27 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white">로그인</h1>
+            <p className="text-sm text-text-muted mt-1">PBL.SYS 계정으로 로그인하세요</p>
+          </div>
+          <div className="space-y-4">
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[42px] bg-brand-cyan/20 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

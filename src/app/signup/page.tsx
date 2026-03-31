@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useAuth } from "@/components/auth/AuthProvider";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/";
@@ -117,5 +117,30 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-white">회원가입</h1>
+            <p className="text-sm text-text-muted mt-1">PBL.SYS에 가입하고 피클볼을 즐기세요</p>
+          </div>
+          <div className="space-y-4">
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[68px] bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-[42px] bg-brand-cyan/20 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+    }>
+      <SignupForm />
+    </Suspense>
   );
 }

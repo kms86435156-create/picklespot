@@ -152,7 +152,7 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
               <p className="text-xs text-text-muted/70 mb-4">
                 {venues.length === 0 ? "피클볼장 정보가 등록되면 이곳에 표시됩니다." : "다른 조건으로 검색해보세요."}
               </p>
-              <Link href="/request?type=court" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
+              <Link href="/courts/register" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
                 장소 등록 요청하기 <ArrowRight className="w-3 h-3" />
               </Link>
             </div>

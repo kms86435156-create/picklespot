@@ -106,10 +106,14 @@ export default function ClubsContent({ clubs }: ClubsContentProps) {
         {filtered.length === 0 ? (
           <div className="bg-surface border border-ui-border rounded-lg p-12 text-center">
             <Users className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
-            <p className="text-text-muted font-medium mb-1">조건에 맞는 동호회가 없습니다</p>
-            <p className="text-xs text-text-muted/70 mb-4">다른 조건으로 검색하거나, 동호회를 등록해보세요.</p>
-            <Link href="/for-clubs" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
-              무료 동호회 등록하기 →
+            <p className="text-text-muted font-medium mb-1">
+              {clubs.length === 0 ? "아직 등록된 동호회가 없습니다" : "조건에 맞는 동호회가 없습니다"}
+            </p>
+            <p className="text-xs text-text-muted/70 mb-4">
+              {clubs.length === 0 ? "첫 번째 동호회를 등록해보세요!" : "다른 조건으로 검색하거나, 동호회를 등록해보세요."}
+            </p>
+            <Link href="/signup/organizer" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
+              동호회 등록하기 →
             </Link>
           </div>
         ) : (
@@ -205,10 +209,10 @@ export default function ClubsContent({ clubs }: ClubsContentProps) {
           <h2 className="text-xl font-bold text-white mb-2">동호회를 운영하고 계신가요?</h2>
           <p className="text-sm text-text-muted mb-4">PBL.SYS에 무료로 동호회를 등록하고, 회원 모집부터 대회 접수까지 한 곳에서 관리하세요.</p>
           <Link
-            href="/for-clubs"
+            href="/signup/organizer"
             className="inline-block px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors"
           >
-            무료로 동호회 등록하기
+            운영자로 가입하고 동호회 등록하기
           </Link>
         </div>
       </div>

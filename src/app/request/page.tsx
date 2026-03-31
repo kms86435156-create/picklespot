@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, Send } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -17,6 +17,27 @@ const REQUEST_TYPES = [
 ];
 
 export default function RequestPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-dark pt-14">
+        <div className="max-w-2xl mx-auto px-4 py-8">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-white">정보 등록 요청</h1>
+            <p className="text-sm text-text-muted mt-1">대회, 피클볼장, 동호회 정보를 알려주세요.</p>
+          </div>
+          <div className="space-y-4">
+            <div className="h-24 bg-surface/50 rounded-lg animate-pulse" />
+            <div className="h-48 bg-surface/50 rounded-lg animate-pulse" />
+          </div>
+        </div>
+      </div>
+    }>
+      <RequestForm />
+    </Suspense>
+  );
+}
+
+function RequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
