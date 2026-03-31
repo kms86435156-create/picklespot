@@ -7,6 +7,7 @@ import TechCorners from "@/components/ui/TechCorners";
 import ClipButton from "@/components/ui/ClipButton";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 type Step = "confirm" | "processing" | "complete" | "error";
 
@@ -15,16 +16,14 @@ interface RegistrationModalProps {
   onClose: () => void;
 }
 
-// 프로필 기반 자동입력 데이터
-const mockProfile = {
-  name: "이정호",
-  phone: "010-1234-5678",
-  level: "C+",
-  dupr: 4.2,
-  region: "인천",
-};
-
 export default function RegistrationModal({ tournament: t, onClose }: RegistrationModalProps) {
+  const { user } = useAuth();
+  const profile = {
+    name: user?.name || "",
+    phone: user?.phone || "",
+    level: user?.skillLevel || "—",
+    region: user?.region || "—",
+  };
   const [step, setStep] = useState<Step>("confirm");
   const [partnerInvite, setPartnerInvite] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -47,10 +46,10 @@ export default function RegistrationModal({ tournament: t, onClose }: Registrati
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: mockProfile.name,
-          phone: mockProfile.phone,
-          level: mockProfile.level,
-          region: mockProfile.region,
+          name: profile.name,
+          phone: profile.phone,
+          level: profile.level,
+          region: profile.region,
           isWaitlist,
         }),
       });
@@ -79,7 +78,7 @@ export default function RegistrationModal({ tournament: t, onClose }: Registrati
   };
 
   const handleCopyInvite = () => {
-    navigator.clipboard.writeText(`https://pbl.sys/tournaments/${t.id}/invite?partner=${mockProfile.name}`);
+    navigator.clipboard.writeText(`https://pbl.sys/tournaments/${t.id}/invite?partner=${encodeURIComponent(profile.name)}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -162,10 +161,10 @@ export default function RegistrationModal({ tournament: t, onClose }: Registrati
                 </div>
                 <div className="bg-dark/30 border border-ui-border rounded-sm p-4 space-y-3">
                   {[
-                    { label: "이름", value: mockProfile.name },
-                    { label: "연락처", value: mockProfile.phone },
-                    { label: "레벨", value: `${mockProfile.level} (DUPR ${mockProfile.dupr})` },
-                    { label: "지역", value: mockProfile.region },
+                    { label: "이름", value: profile.name },
+                    { label: "연락처", value: profile.phone },
+                    { label: "레벨", value: profile.level },
+                    { label: "지역", value: profile.region },
                   ].map((field) => (
                     <div key={field.label} className="flex items-center justify-between">
                       <span className="text-xs text-text-muted">{field.label}</span>

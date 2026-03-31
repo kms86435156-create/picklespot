@@ -11,6 +11,7 @@ const links = [
   { label: "대회", href: "/tournaments" },
   { label: "피클볼장", href: "/courts" },
   { label: "동호회", href: "/clubs" },
+  { label: "배우기", href: "/learn" },
   { label: "번개", href: "/matches" },
   { label: "커뮤니티", href: "/community" },
 ];

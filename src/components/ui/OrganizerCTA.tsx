@@ -24,14 +24,14 @@ const COPY = {
   club: {
     title: "동호회를 운영하고 계신가요?",
     desc: "회원 모집, 대회 접수, 일정 관리를 무료로 시작하세요.",
-    href: "/for-clubs",
-    label: "무료 사전등록",
+    href: "/signup/organizer",
+    label: "운영자로 가입하기",
   },
   general: {
     title: "동호회 운영자이신가요?",
     desc: "무료로 회원 관리 + 대회 접수를 시작하세요.",
-    href: "/for-clubs",
-    label: "무료로 시작하기",
+    href: "/signup/organizer",
+    label: "운영자로 가입하기",
   },
 };
 

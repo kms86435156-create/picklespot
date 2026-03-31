@@ -44,8 +44,8 @@ export default function GuidePage({ params }: { params: { slug: string } }) {
         <div className="mt-12 bg-gradient-to-r from-brand-cyan/10 to-brand-red/5 border border-brand-cyan/20 rounded-lg p-6 text-center">
           <p className="font-bold text-white mb-2">피클볼 동호회를 운영하고 계신가요?</p>
           <p className="text-sm text-text-muted mb-4">대회 접수, 회원 관리, 일정 관리를 무료로 시작하세요.</p>
-          <Link href="/for-clubs" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
-            무료 사전등록
+          <Link href="/signup/organizer" className="inline-flex items-center gap-2 px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors">
+            운영자로 가입하기
           </Link>
         </div>
 
