@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import {
   MapPin, Target, Clock, Users, Trophy, Zap, Heart, Bell,
-  Edit3, Save, X, LogOut, ChevronRight, Bookmark, Shield, Calendar, MessageCircle,
+  Edit3, Save, X, LogOut, ChevronRight, Bookmark, Shield, Calendar, MessageCircle, Ticket,
 } from "lucide-react";
 
 const REGIONS = [
@@ -36,6 +36,12 @@ export default function MyPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [myMatches, setMyMatches] = useState<{ hosted: any[]; joined: any[] }>({ hosted: [], joined: [] });
   const [matchesLoading, setMatchesLoading] = useState(false);
+  const [myBookings, setMyBookings] = useState<any[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [myClubs, setMyClubs] = useState<any[]>([]);
+  const [clubsLoading, setClubsLoading] = useState(false);
+  const [myTournaments, setMyTournaments] = useState<any[]>([]);
+  const [tournamentsLoading, setTournamentsLoading] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -50,6 +56,21 @@ export default function MyPage() {
         .then(d => setMyMatches({ hosted: d.hosted || [], joined: d.joined || [] }))
         .catch(() => {})
         .finally(() => setMatchesLoading(false));
+      setBookingsLoading(true);
+      fetch("/api/court-bookings?userId=me").then(r => r.json())
+        .then(d => setMyBookings(d.bookings || []))
+        .catch(() => {})
+        .finally(() => setBookingsLoading(false));
+      setClubsLoading(true);
+      fetch("/api/auth/my-clubs").then(r => r.json())
+        .then(d => setMyClubs(d.clubs || []))
+        .catch(() => {})
+        .finally(() => setClubsLoading(false));
+      setTournamentsLoading(true);
+      fetch("/api/auth/my-registrations").then(r => r.json())
+        .then(d => setMyTournaments(Array.isArray(d) ? d : []))
+        .catch(() => {})
+        .finally(() => setTournamentsLoading(false));
     }
   }, [user]);
 
@@ -98,6 +119,7 @@ export default function MyPage() {
 
   const tabs = [
     { icon: <Zap className="w-4 h-4" />, label: "번개" },
+    { icon: <Ticket className="w-4 h-4" />, label: "예약" },
     { icon: <Trophy className="w-4 h-4" />, label: "대회" },
     { icon: <Users className="w-4 h-4" />, label: "동호회" },
     { icon: <MessageCircle className="w-4 h-4" />, label: "메시지" },
@@ -308,24 +330,128 @@ export default function MyPage() {
               )
             )}
             {activeTab === 1 && (
-              <EmptySection
-                icon={<Trophy className="w-10 h-10" />}
-                title="아직 신청한 대회가 없습니다"
-                desc="전국 피클볼 대회에 도전해보세요!"
-                ctaLabel="대회 둘러보기"
-                ctaHref="/tournaments"
-              />
+              bookingsLoading ? (
+                <div className="py-8 text-center text-text-muted text-sm animate-pulse">불러오는 중...</div>
+              ) : myBookings.length === 0 ? (
+                <EmptySection
+                  icon={<Ticket className="w-10 h-10" />}
+                  title="아직 예약한 코트가 없습니다"
+                  desc="피클볼장을 찾아 코트를 예약해보세요!"
+                  ctaLabel="피클볼장 찾기"
+                  ctaHref="/courts"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {myBookings.map((b: any) => {
+                    const statusMap: Record<string, { label: string; cls: string }> = {
+                      pending_approval: { label: "승인 대기", cls: "bg-yellow-400/10 text-yellow-400" },
+                      confirmed: { label: "확정", cls: "bg-green-400/10 text-green-400" },
+                      rejected: { label: "거절", cls: "bg-red-500/10 text-red-400" },
+                      cancelled: { label: "취소", cls: "bg-white/5 text-text-muted" },
+                    };
+                    const st = statusMap[b.status] || { label: b.status, cls: "bg-white/5 text-text-muted" };
+                    const dateStr = b.startAt?.split("T")[0] || "";
+                    const timeStr = b.startAt?.split("T")[1]?.slice(0, 5) || "";
+                    return (
+                      <div key={b.id} className="flex items-center justify-between px-3 py-3 rounded-lg bg-white/[0.02] border border-ui-border">
+                        <div className="flex items-center gap-3">
+                          <Ticket className="w-4 h-4 text-brand-cyan shrink-0" />
+                          <div>
+                            <p className="text-sm text-white font-medium">{b.venueName}</p>
+                            <p className="text-[10px] text-text-muted">{dateStr} {timeStr} · ₩{(b.totalAmount || 0).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${st.cls}`}>{st.label}</span>
+                          {b.status === "pending_approval" && (
+                            <button onClick={async () => {
+                              await fetch("/api/court-bookings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bookingId: b.id, action: "cancel" }) });
+                              setMyBookings(prev => prev.map(x => x.id === b.id ? { ...x, status: "cancelled" } : x));
+                            }} className="text-[10px] text-red-400 hover:underline">취소</button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
             )}
             {activeTab === 2 && (
-              <EmptySection
-                icon={<Users className="w-10 h-10" />}
-                title="아직 가입한 동호회가 없습니다"
-                desc="내 근처 동호회를 찾아 함께 운동해요!"
-                ctaLabel="동호회 찾기"
-                ctaHref="/clubs"
-              />
+              tournamentsLoading ? (
+                <div className="py-8 text-center text-text-muted text-sm animate-pulse">불러오는 중...</div>
+              ) : myTournaments.length === 0 ? (
+                <EmptySection
+                  icon={<Trophy className="w-10 h-10" />}
+                  title="아직 신청한 대회가 없습니다"
+                  desc="전국 피클볼 대회에 도전해보세요!"
+                  ctaLabel="대회 둘러보기"
+                  ctaHref="/tournaments"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {myTournaments.map((r: any) => {
+                    const stMap: Record<string, { label: string; cls: string }> = {
+                      pending: { label: "신청완료", cls: "bg-yellow-400/10 text-yellow-400" },
+                      paid: { label: "입금확인", cls: "bg-blue-400/10 text-blue-400" },
+                      approved: { label: "참가확정", cls: "bg-green-400/10 text-green-400" },
+                      waitlisted: { label: "대기", cls: "bg-white/5 text-text-muted" },
+                      cancelled: { label: "취소", cls: "bg-red-500/10 text-red-400" },
+                    };
+                    const st = stMap[r.status] || { label: r.status, cls: "bg-white/5 text-text-muted" };
+                    return (
+                      <Link key={r.id} href={`/tournaments/${r.tournamentId}`} className="block">
+                        <div className="flex items-center justify-between px-3 py-3 rounded-lg bg-white/[0.02] border border-ui-border hover:border-brand-cyan/30 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <Trophy className="w-4 h-4 text-brand-cyan shrink-0" />
+                            <div>
+                              <p className="text-sm text-white font-medium">{r.tournamentTitle}</p>
+                              <p className="text-[10px] text-text-muted">{r.division || r.divisions} · {r.regNumber}</p>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${st.cls}`}>{st.label}</span>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )
             )}
             {activeTab === 3 && (
+              clubsLoading ? (
+                <div className="py-8 text-center text-text-muted text-sm animate-pulse">불러오는 중...</div>
+              ) : myClubs.length === 0 ? (
+                <EmptySection
+                  icon={<Users className="w-10 h-10" />}
+                  title="아직 가입한 동호회가 없습니다"
+                  desc="내 근처 동호회를 찾아 함께 운동해요!"
+                  ctaLabel="동호회 찾기"
+                  ctaHref="/clubs"
+                />
+              ) : (
+                <div className="space-y-2">
+                  {myClubs.map((club: any) => (
+                    <Link key={club.id} href={`/clubs/${club.id}`} className="block">
+                      <div className="flex items-center justify-between px-3 py-3 rounded-lg bg-white/[0.02] border border-ui-border hover:border-brand-cyan/30 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <Users className="w-4 h-4 text-brand-cyan shrink-0" />
+                          <div>
+                            <p className="text-sm text-white font-medium">{club.name}</p>
+                            <p className="text-[10px] text-text-muted">{club.region} · {club.level || "전 급수"} · 회원 {club.memberCount}명</p>
+                          </div>
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded ${club.myStatus === "active" ? "bg-green-400/10 text-green-400" : "bg-yellow-400/10 text-yellow-400"}`}>
+                          {club.myStatus === "active" ? (club.myRole === "owner" ? "운영자" : "회원") : "승인 대기"}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                  <Link href="/clubs" className="block text-center text-sm text-brand-cyan hover:underline mt-2">
+                    동호회 더보기 <ChevronRight className="w-3 h-3 inline" />
+                  </Link>
+                </div>
+              )
+            )}
+            {activeTab === 4 && (
               <div className="text-center py-6">
                 <MessageCircle className="w-10 h-10 text-text-muted/15 mx-auto mb-3" />
                 <p className="text-text-muted font-medium mb-1">채팅 메시지</p>
@@ -336,7 +462,7 @@ export default function MyPage() {
                 </Link>
               </div>
             )}
-            {activeTab === 4 && (
+            {activeTab === 5 && (
               <EmptySection
                 icon={<Heart className="w-10 h-10" />}
                 title="찜한 항목이 없습니다"
@@ -345,12 +471,16 @@ export default function MyPage() {
                 ctaHref="/courts"
               />
             )}
-            {activeTab === 5 && (
-              <EmptySection
-                icon={<Bell className="w-10 h-10" />}
-                title="알림이 없습니다"
-                desc="대회 접수, 번개 모집 등 새로운 소식을 알려드려요."
-              />
+            {activeTab === 6 && (
+              <div className="text-center py-6">
+                <Bell className="w-10 h-10 text-text-muted/15 mx-auto mb-3" />
+                <p className="text-text-muted font-medium mb-1">알림함</p>
+                <p className="text-xs text-text-muted/60 mb-4">번개 참가, 채팅 메시지 등 알림을 확인하세요.</p>
+                <Link href="/notifications"
+                  className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
+                  알림 전체 보기 <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
             )}
           </div>
         </div>

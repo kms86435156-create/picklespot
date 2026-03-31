@@ -26,10 +26,10 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const USER_DATA_FILES = new Set([
   "coaches.json",
   "flash-games.json", "partner-posts.json", "user.json",
-  "registrations.json", "leads.json", "bookings.json",
-  "booking-events.json", "payments.json", "notifications.json",
-  "slot-inventory.json", "business-hours.json", "cancellation-policies.json",
-  "court-resources.json", "notification-settings.json", "sync-jobs.json",
+  "registrations.json", "leads.json",
+  "booking-events.json", "payments.json",
+  "cancellation-policies.json",
+  "sync-jobs.json",
   "booking-requests.json",
   "inquiries.json",
 ]);
@@ -174,7 +174,13 @@ const TABLE_MAP: Record<string, string> = {
   "conversations.json": "conversations",
   "messages.json": "messages",
   "reports.json": "reports",
+  "notifications.json": "notifications",
   "blocks.json": "blocks",
+  "club-members.json": "club_members",
+  "club-posts.json": "club_posts",
+  "community-posts.json": "community_posts",
+  "venue-reviews.json": "venue_reviews",
+  "manner-ratings.json": "manner_ratings",
 };
 
 export function createEntity(file: string, entity: any) {
@@ -362,8 +368,80 @@ export async function getPartnerPosts(filters?: { region?: string }) {
 // User / Notifications
 // ═══════════════════════════════
 export function getCurrentUser() { return readJSON("user.json")[0] || null; }
-export function getNotifications() { return readJSON("notifications.json"); }
 export function getNotificationSettings() { return readJSON("notification-settings.json"); }
+
+/** Create a notification for a user */
+export function createNotification(notification: {
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  link?: string;
+}) {
+  const notif = {
+    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    userId: notification.userId,
+    type: notification.type,
+    title: notification.title,
+    message: notification.message,
+    link: notification.link || "",
+    isRead: false,
+    createdAt: new Date().toISOString(),
+  };
+  createEntity("notifications.json", notif);
+  return notif;
+}
+
+/** Get notifications for a user */
+export async function getUserNotifications(userId: string, limit = 50): Promise<any[]> {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    return (data || []).map(toCamel);
+  }
+  return readJSON("notifications.json")
+    .filter((n: any) => n.userId === userId)
+    .sort((a: any, b: any) => (b.createdAt || "").localeCompare(a.createdAt || ""))
+    .slice(0, limit);
+}
+
+/** Get unread notification count for a user */
+export async function getUnreadNotificationCount(userId: string): Promise<number> {
+  if (isSupabaseEnabled) {
+    const { count } = await db!.from("notifications")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_read", false);
+    return count || 0;
+  }
+  return readJSON("notifications.json")
+    .filter((n: any) => n.userId === userId && !n.isRead).length;
+}
+
+/** Mark a notification as read */
+export function markNotificationRead(id: string) {
+  return updateEntity("notifications.json", id, { isRead: true });
+}
+
+/** Mark all notifications as read for a user */
+export async function markAllNotificationsRead(userId: string) {
+  if (isSupabaseEnabled) {
+    await db!.from("notifications")
+      .update({ is_read: true })
+      .eq("user_id", userId)
+      .eq("is_read", false);
+    return;
+  }
+  const all = readJSON("notifications.json");
+  let changed = false;
+  for (const n of all) {
+    if (n.userId === userId && !n.isRead) { n.isRead = true; changed = true; }
+  }
+  if (changed) writeJSON("notifications.json", all);
+}
 export function getSyncJobs() { return readJSON("sync-jobs.json"); }
 
 // ═══════════════════════════════

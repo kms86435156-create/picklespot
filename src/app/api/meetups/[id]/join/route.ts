@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMeetup, getMeetupParticipants, createMeetupParticipant, updateEntity } from "@/lib/db";
+import { getMeetup, getMeetupParticipants, createMeetupParticipant, updateEntity, createNotification } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
@@ -36,6 +36,18 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     };
 
     const result = await createMeetupParticipant(participant);
+
+    // Notify host about new participant
+    if (meetup.hostId && meetup.hostId !== session.id) {
+      createNotification({
+        userId: meetup.hostId,
+        type: "match_apply",
+        title: "번개 참가 신청",
+        message: `${session.name}님이 "${meetup.title}" 번개에 참가 신청했습니다.`,
+        link: `/matches/${params.id}`,
+      });
+    }
+
     return NextResponse.json({ success: true, participant: result, waitlisted: isFull });
   } catch (e: any) {
     if (e.message?.includes("이미 참가")) {
@@ -59,10 +71,19 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     updateEntity("meetup-participants.json", mine.id, { status: "cancelled" });
 
-    // Decrement currentPlayers
+    // Decrement currentPlayers + notify host
     const meetup = await getMeetup(params.id);
     if (meetup) {
       updateEntity("meetups.json", params.id, { currentPlayers: Math.max(0, (meetup.currentPlayers || 1) - 1) });
+      if (meetup.hostId && meetup.hostId !== session.id) {
+        createNotification({
+          userId: meetup.hostId,
+          type: "match_canceled",
+          title: "번개 참가 취소",
+          message: `${session.name}님이 "${meetup.title}" 번개 참가를 취소했습니다.`,
+          link: `/matches/${params.id}`,
+        });
+      }
     }
 
     return NextResponse.json({ success: true });

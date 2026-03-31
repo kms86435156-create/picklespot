@@ -17,7 +17,7 @@ export async function GET() {
   const tournaments = readJSON("tournaments.json");
 
   const myRegs = allRegs
-    .filter((r: any) => r.playerPhone === user.phone || r.playerEmail === user.email)
+    .filter((r: any) => r.userId === session.id || r.playerPhone === user.phone || r.playerEmail === user.email)
     .sort((a: any, b: any) => (b.createdAt || "").localeCompare(a.createdAt || ""))
     .map((r: any) => {
       const t = tournaments.find((t: any) => t.id === r.tournamentId);

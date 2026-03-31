@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, X, User, LogOut, MessageCircle } from "lucide-react";
+import { Menu, X, User, LogOut, MessageCircle, Bell } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 
@@ -12,25 +12,79 @@ const links = [
   { label: "피클볼장", href: "/courts" },
   { label: "동호회", href: "/clubs" },
   { label: "번개", href: "/matches" },
+  { label: "커뮤니티", href: "/community" },
 ];
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifCount, setNotifCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const pathname = usePathname();
   const { user, loading, logout } = useAuth();
 
-  // Poll unread messages
+  // Poll unread messages + notifications
   useEffect(() => {
-    if (!user) { setUnreadCount(0); return; }
+    if (!user) { setUnreadCount(0); setNotifCount(0); return; }
     function fetchUnread() {
       fetch("/api/messages/unread").then(r => r.json()).then(d => setUnreadCount(d.count || 0)).catch(() => {});
+      fetch("/api/notifications?countOnly=true").then(r => r.json()).then(d => setNotifCount(d.unreadCount || 0)).catch(() => {});
     }
     fetchUnread();
     const interval = setInterval(fetchUnread, 10000);
     return () => clearInterval(interval);
   }, [user]);
+
+  async function openNotifications() {
+    setNotifOpen(!notifOpen);
+    setUserMenuOpen(false);
+    if (!notifOpen) {
+      const res = await fetch("/api/notifications");
+      const data = await res.json();
+      setNotifications(data.notifications || []);
+    }
+  }
+
+  async function markNotifRead(id: string, link?: string) {
+    await fetch("/api/notifications", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    setNotifCount(prev => Math.max(0, prev - 1));
+    setNotifOpen(false);
+    if (link) window.location.href = link;
+  }
+
+  async function markAllRead() {
+    await fetch("/api/notifications", {
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ markAll: true }),
+    });
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    setNotifCount(0);
+  }
+
+  function notifIcon(type: string) {
+    if (type.startsWith("match_")) return "⚡";
+    if (type.startsWith("chat_")) return "💬";
+    if (type.startsWith("club_")) return "👥";
+    if (type.startsWith("tournament_")) return "🏆";
+    return "🔔";
+  }
+
+  function timeAgo(d: string) {
+    if (!d) return "";
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "방금";
+    if (m < 60) return `${m}분 전`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}시간 전`;
+    return `${Math.floor(h / 24)}일 전`;
+  }
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -78,11 +132,59 @@ export default function Navbar() {
               <Link href="/messages" className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
                 <MessageCircle className="w-5 h-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 min-w-[18px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
                 )}
               </Link>
+              {/* Bell icon + dropdown */}
+              <div className="relative">
+                <button onClick={openNotifications} className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
+                  <Bell className="w-5 h-5" />
+                  {notifCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-1">
+                      {notifCount > 9 ? "9+" : notifCount}
+                    </span>
+                  )}
+                </button>
+                {notifOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} />
+                    <div className="absolute right-0 top-full mt-1 w-80 bg-surface border border-ui-border rounded-lg shadow-xl z-50 max-h-[420px] flex flex-col">
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-ui-border">
+                        <span className="text-sm font-bold text-white">알림</span>
+                        {notifCount > 0 && (
+                          <button onClick={markAllRead} className="text-[10px] text-brand-cyan hover:underline">모두 읽음</button>
+                        )}
+                      </div>
+                      <div className="overflow-y-auto flex-1">
+                        {notifications.length === 0 ? (
+                          <p className="text-sm text-text-muted text-center py-8">알림이 없습니다</p>
+                        ) : (
+                          notifications.slice(0, 20).map(n => (
+                            <button key={n.id} onClick={() => markNotifRead(n.id, n.link)}
+                              className={`w-full text-left px-4 py-3 border-b border-ui-border/50 hover:bg-white/5 transition-colors ${!n.isRead ? "bg-brand-cyan/5" : ""}`}>
+                              <div className="flex items-start gap-2.5">
+                                <span className="text-base mt-0.5">{notifIcon(n.type)}</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-xs font-medium leading-snug ${!n.isRead ? "text-white" : "text-text-muted"}`}>{n.title}</p>
+                                  <p className="text-[11px] text-text-muted/70 mt-0.5 line-clamp-2">{n.message}</p>
+                                  <p className="text-[10px] text-text-muted/40 mt-1">{timeAgo(n.createdAt)}</p>
+                                </div>
+                                {!n.isRead && <span className="w-2 h-2 bg-brand-cyan rounded-full mt-1.5 shrink-0" />}
+                              </div>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                      <Link href="/notifications" onClick={() => setNotifOpen(false)}
+                        className="block text-center text-xs text-brand-cyan hover:underline py-2.5 border-t border-ui-border">
+                        전체 보기
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
               {/* User menu */}
               <div className="relative">
                 <button onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -127,6 +229,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <div className="lg:hidden flex items-center gap-1">
           {user && (
+            <>
             <Link href="/messages" className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
               <MessageCircle className="w-5 h-5" />
               {unreadCount > 0 && (
@@ -135,6 +238,15 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
+            <Link href="/notifications" className="relative p-2 text-text-muted hover:text-brand-cyan transition-colors">
+              <Bell className="w-5 h-5" />
+              {notifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5">
+                  {notifCount > 9 ? "9+" : notifCount}
+                </span>
+              )}
+            </Link>
+            </>
           )}
           <button className="text-text-main p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
             onClick={() => setOpen(!open)} aria-label="메뉴 열기">

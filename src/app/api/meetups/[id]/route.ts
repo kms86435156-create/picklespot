@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getMeetup, getMeetupParticipants, updateEntity } from "@/lib/db";
+import { getMeetup, getMeetupParticipants, updateEntity, createNotification } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
@@ -26,5 +26,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   updateEntity("meetups.json", params.id, updates);
+
+  // Notify participants on status change
+  if (updates.status && updates.status !== meetup.status) {
+    const participants = await getMeetupParticipants(params.id);
+    const statusLabels: Record<string, string> = { closed: "마감", completed: "완료", cancelled: "취소" };
+    const label = statusLabels[updates.status] || updates.status;
+    for (const p of participants) {
+      if (p.userId && p.userId !== session.id && p.status === "joined") {
+        createNotification({
+          userId: p.userId,
+          type: updates.status === "cancelled" ? "match_canceled" : "match_reminder",
+          title: `번개 ${label}`,
+          message: `"${meetup.title}" 번개가 ${label}되었습니다.`,
+          link: `/matches/${params.id}`,
+        });
+      }
+    }
+  }
+
   return NextResponse.json({ success: true });
 }

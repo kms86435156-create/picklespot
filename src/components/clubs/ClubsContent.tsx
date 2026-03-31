@@ -209,7 +209,7 @@ export default function ClubsContent({ clubs }: ClubsContentProps) {
           <h2 className="text-xl font-bold text-white mb-2">동호회를 운영하고 계신가요?</h2>
           <p className="text-sm text-text-muted mb-4">PBL.SYS에 무료로 동호회를 등록하고, 회원 모집부터 대회 접수까지 한 곳에서 관리하세요.</p>
           <Link
-            href="/signup/organizer"
+            href="/clubs/create"
             className="inline-block px-6 py-3 bg-brand-cyan text-dark font-bold text-sm rounded hover:bg-brand-cyan/90 transition-colors"
           >
             운영자로 가입하고 동호회 등록하기

@@ -5,6 +5,8 @@ import { MapPin, Phone, Clock, Car, Home, ExternalLink, ArrowLeft, Trophy, Chevr
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
 import KakaoMap from "@/components/map/KakaoMap";
 import DirectionsButton from "@/components/map/DirectionsButton";
+import BookingSlotPicker from "@/components/venues/BookingSlotPicker";
+import VenueReviews from "@/components/venues/VenueReviews";
 
 function InfoItem({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
   if (!value) return null;
@@ -70,6 +72,9 @@ export default function VenueDetailPage({ venue: v, nearbyTournaments }: { venue
               </div>
             )}
 
+            {/* Booking Slot Picker */}
+            <BookingSlotPicker venueId={v.id} venueName={v.name} />
+
             {/* Amenities */}
             <div className="bg-surface border border-ui-border rounded-lg p-5">
               <h2 className="text-sm font-bold text-text-muted mb-3 uppercase tracking-wider">편의시설</h2>
@@ -94,6 +99,9 @@ export default function VenueDetailPage({ venue: v, nearbyTournaments }: { venue
                 <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">{v.description}</p>
               </div>
             )}
+
+            {/* Reviews */}
+            <VenueReviews venueId={v.id} />
 
             {/* Nearby tournaments */}
             {nearbyTournaments.length > 0 && (

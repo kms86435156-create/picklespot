@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserSession } from "@/lib/auth";
-import { getUserConversations, getMessages, sendMessage, markMessagesRead, getBlockedUsers } from "@/lib/db";
+import { getUserConversations, getMessages, sendMessage, markMessagesRead, getBlockedUsers, createNotification } from "@/lib/db";
 import { findUserById } from "@/lib/users";
 
 /** GET /api/messages?conversationId=xxx — Get messages for a conversation */
@@ -61,6 +61,23 @@ export async function POST(req: NextRequest) {
       senderName: session.name,
       text: text.trim(),
     });
+
+    // Notify recipient
+    const convs = await getUserConversations(session.id);
+    const conv = convs.find((c: any) => c.id === conversationId);
+    if (conv) {
+      const recipientId = (conv.participantIds || []).find((id: string) => id !== session.id);
+      if (recipientId) {
+        createNotification({
+          userId: recipientId,
+          type: "chat_message",
+          title: "새 메시지",
+          message: `${session.name}: ${text.trim().slice(0, 50)}${text.trim().length > 50 ? "..." : ""}`,
+          link: `/messages/${conversationId}`,
+        });
+      }
+    }
+
     return NextResponse.json({ message });
   } catch (e: any) {
     return NextResponse.json({ error: e.message || "전송 실패" }, { status: 500 });
