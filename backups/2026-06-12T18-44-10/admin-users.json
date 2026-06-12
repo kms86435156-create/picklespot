@@ -1,0 +1,11 @@
+[
+  {
+    "id": "ba952166-c18e-47fd-909f-6b465b37685f",
+    "email": "admin@pbl.sys",
+    "name": "관리자",
+    "passwordHash": "a667cf3ec9aec74507015ff4c75148b2:3a5b0203bc6b7e56e3e48ef9be5edca63abb308b8f2a587948967228fac12d4b",
+    "role": "admin",
+    "createdAt": "2026-03-31T06:39:33.252Z",
+    "updatedAt": "2026-03-31T06:39:33.252Z"
+  }
+]

@@ -60,7 +60,7 @@ export function writeJSON(file: string, data: any[]) {
 const db = supabaseAdmin || supabase;
 
 // ═══ camelCase ↔ snake_case ═══
-function toSnake(obj: any): any {
+export function toSnake(obj: any): any {
   const result: any = {};
   for (const [k, v] of Object.entries(obj)) {
     const sk = k.replace(/[A-Z]/g, m => "_" + m.toLowerCase());
@@ -480,25 +480,41 @@ export function getDataMeta() {
 }
 
 // ═══════════════════════════════
-// Meetups (같이치기/번개모임)
+// Meetups (번개)
 // ═══════════════════════════════
-export async function getMeetups(filters?: { region?: string; status?: string }) {
+export async function getMeetups(filters?: {
+  region?: string;
+  skillLevel?: string;
+  date?: string; // YYYY-MM-DD
+  status?: string;
+  isBeginnerFriendly?: boolean;
+}) {
   if (isSupabaseEnabled) {
-    let q = db!.from("meetups").select("*");
-    if (filters?.region) q = q.eq("region", filters.region);
+    let q = db!.from("meetups").select("*, meetup_participants(count)");
+    if (filters?.region && filters.region !== "전체") q = q.eq("region", filters.region);
+    if (filters?.skillLevel && filters.skillLevel !== "전체" && filters.skillLevel !== "무관") {
+      q = q.or(`skill_level.eq.${filters.skillLevel},skill_level.eq.무관`);
+    }
     if (filters?.status) q = q.eq("status", filters.status);
-    const { data } = await q.order("meetup_date", { ascending: true });
+    if (filters?.isBeginnerFriendly) q = q.eq("is_beginner_friendly", true);
+    if (filters?.date) q = q.gte("date", filters.date).lt("date", filters.date + "T23:59:59");
+    const { data } = await q.order("date", { ascending: true });
     return (data || []).map(toCamel);
   }
   let m = readJSON("meetups.json");
-  if (filters?.region) m = m.filter((x: any) => x.region === filters.region);
+  if (filters?.region && filters.region !== "전체") m = m.filter((x: any) => x.region === filters.region);
+  if (filters?.skillLevel && filters.skillLevel !== "전체" && filters.skillLevel !== "무관") {
+    m = m.filter((x: any) => x.skillLevel === filters.skillLevel || x.skillLevel === "무관");
+  }
   if (filters?.status) m = m.filter((x: any) => x.status === filters.status);
-  return m;
+  if (filters?.isBeginnerFriendly) m = m.filter((x: any) => x.isBeginnerFriendly === true);
+  if (filters?.date) m = m.filter((x: any) => x.date?.startsWith(filters.date!));
+  return m.sort((a: any, b: any) => (a.date || "").localeCompare(b.date || ""));
 }
 
 export async function getMeetup(id: string) {
   if (isSupabaseEnabled) {
-    const { data } = await db!.from("meetups").select("*").eq("id", id).single();
+    const { data } = await db!.from("meetups").select("*, meetup_participants(*)").eq("id", id).single();
     return data ? toCamel(data) : null;
   }
   return readJSON("meetups.json").find((m: any) => m.id === id) || null;
@@ -541,6 +557,81 @@ export async function createMeetupParticipant(participant: any) {
     writeJSON("meetups.json", meetups);
   }
   return participant;
+}
+
+export async function createMeetup(meetup: any) {
+  const id = `meetup_${Date.now()}`;
+  const now = new Date().toISOString();
+  const entity = { id, ...meetup, status: "open", currentPlayers: 1, createdAt: now, updatedAt: now };
+  if (isSupabaseEnabled) {
+    const { data, error } = await db!.from("meetups").insert(toSnake(entity)).select().single();
+    if (error) throw new Error(error.message);
+    return toCamel(data);
+  }
+  const list = readJSON("meetups.json");
+  list.push(entity);
+  writeJSON("meetups.json", list);
+  return entity;
+}
+
+export async function applyMeetup(meetupId: string, userId: string, userName: string) {
+  if (isSupabaseEnabled) {
+    const { data: existing } = await db!.from("meetup_participants").select("id").eq("meetup_id", meetupId).eq("user_id", userId).single();
+    if (existing) return { alreadyApplied: true };
+    const { error } = await db!.from("meetup_participants").insert({
+      id: `mp_${Date.now()}`,
+      meetup_id: meetupId,
+      user_id: userId,
+      user_name: userName,
+      status: "confirmed",
+      joined_at: new Date().toISOString(),
+    });
+    if (error) throw new Error(error.message);
+    // Increment current_players via count query
+    try {
+      const { count } = await db!.from("meetup_participants").select("id", { count: "exact" }).eq("meetup_id", meetupId).neq("status", "cancelled");
+      await db!.from("meetups").update({ current_players: count || 0 }).eq("id", meetupId);
+    } catch {}
+    return { success: true };
+  }
+  // JSON fallback
+  const participants = readJSON("meetup-participants.json");
+  if (participants.find((p: any) => p.meetupId === meetupId && p.userId === userId)) {
+    return { alreadyApplied: true };
+  }
+  participants.push({
+    id: `mp_${Date.now()}`,
+    meetupId,
+    userId,
+    userName,
+    status: "confirmed",
+    joinedAt: new Date().toISOString(),
+  });
+  writeJSON("meetup-participants.json", participants);
+  const meetups = readJSON("meetups.json");
+  const idx = meetups.findIndex((m: any) => m.id === meetupId);
+  if (idx >= 0) { meetups[idx].currentPlayers = (meetups[idx].currentPlayers || 0) + 1; writeJSON("meetups.json", meetups); }
+  return { success: true };
+}
+
+export async function cancelMeetupApplication(meetupId: string, userId: string) {
+  if (isSupabaseEnabled) {
+    const { error } = await db!.from("meetup_participants").delete().eq("meetup_id", meetupId).eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    // Decrement current_players via count query
+    try {
+      const { count } = await db!.from("meetup_participants").select("id", { count: "exact" }).eq("meetup_id", meetupId).neq("status", "cancelled");
+      await db!.from("meetups").update({ current_players: count || 0 }).eq("id", meetupId);
+    } catch {}
+    return { success: true };
+  }
+  let parts = readJSON("meetup-participants.json");
+  parts = parts.filter((p: any) => !(p.meetupId === meetupId && p.userId === userId));
+  writeJSON("meetup-participants.json", parts);
+  const meetups = readJSON("meetups.json");
+  const idx = meetups.findIndex((m: any) => m.id === meetupId);
+  if (idx >= 0) { meetups[idx].currentPlayers = Math.max(0, (meetups[idx].currentPlayers || 1) - 1); writeJSON("meetups.json", meetups); }
+  return { success: true };
 }
 
 // ═══════════════════════════════

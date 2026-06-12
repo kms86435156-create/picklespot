@@ -9,6 +9,9 @@
     "lint": "next lint",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:flow": "npx tsx src/scripts/test-e2e-flow.ts",
+    "backup": "npx tsx src/scripts/backup-json.ts",
+    "backup:list": "npx tsx src/scripts/backup-json.ts list",
     "seed": "npx tsx src/scripts/seed-json.ts && npx tsx src/scripts/seed-all.ts && npx tsx src/scripts/seed-booking.ts"
   },
   "dependencies": {

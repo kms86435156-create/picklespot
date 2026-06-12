@@ -8,12 +8,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 const links = [
-  { label: "대회", href: "/tournaments" },
-  { label: "피클볼장", href: "/courts" },
-  { label: "동호회", href: "/clubs" },
-  { label: "배우기", href: "/learn" },
-  { label: "번개", href: "/matches" },
+  { label: "번개", href: "/matches", hot: true },
+  { label: "코트", href: "/courts" },
+  { label: "모임", href: "/clubs" },
+  { label: "레슨", href: "/lessons" },
   { label: "커뮤니티", href: "/community" },
+  { label: "대회", href: "/tournaments", muted: true },
 ];
 
 export default function Navbar() {
@@ -112,6 +112,28 @@ export default function Navbar() {
         <div className="hidden lg:flex items-center gap-1">
           {links.map((l) => {
             const isActive = pathname === l.href || pathname.startsWith(l.href + "/");
+            if (l.hot) {
+              return (
+                <Link key={l.href} href={l.href}
+                  className={`px-3 py-2 text-sm font-bold rounded-sm transition-all ${
+                    isActive
+                      ? "text-brand-cyan bg-brand-cyan/15 shadow-[0_0_12px_rgba(0,212,255,0.25)]"
+                      : "text-brand-cyan/90 hover:text-brand-cyan hover:bg-brand-cyan/10 hover:shadow-[0_0_8px_rgba(0,212,255,0.15)]"
+                  }`}>
+                  ⚡{l.label}
+                </Link>
+              );
+            }
+            if (l.muted) {
+              return (
+                <Link key={l.href} href={l.href}
+                  className={`px-2.5 py-2 text-xs font-medium rounded-sm transition-colors ${
+                    isActive ? "text-text-muted/90 bg-white/5" : "text-text-muted/50 hover:text-text-muted hover:bg-white/5"
+                  }`}>
+                  {l.label}
+                </Link>
+              );
+            }
             return (
               <Link key={l.href} href={l.href}
                 className={`px-3 py-2 text-sm font-medium rounded-sm transition-colors ${
@@ -264,6 +286,26 @@ export default function Navbar() {
             <div className="px-4 py-3 flex flex-col">
               {links.map((l) => {
                 const isActive = pathname === l.href;
+                if (l.hot) {
+                  return (
+                    <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
+                      className={`py-3 px-3 text-base font-bold rounded-sm transition-colors min-h-[44px] flex items-center ${
+                        isActive ? "text-brand-cyan bg-brand-cyan/15" : "text-brand-cyan/80 hover:text-brand-cyan"
+                      }`}>
+                      ⚡{l.label}
+                    </Link>
+                  );
+                }
+                if (l.muted) {
+                  return (
+                    <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
+                      className={`py-3 px-3 text-sm font-medium rounded-sm transition-colors min-h-[44px] flex items-center ${
+                        isActive ? "text-text-muted/90 bg-white/5" : "text-text-muted/50 hover:text-text-muted"
+                      }`}>
+                      {l.label}
+                    </Link>
+                  );
+                }
                 return (
                   <Link key={l.href} href={l.href} onClick={() => setOpen(false)}
                     className={`py-3 px-3 text-base font-medium rounded-sm transition-colors min-h-[44px] flex items-center ${

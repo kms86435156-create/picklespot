@@ -61,26 +61,5 @@
     "currentPlayers": 2,
     "createdAt": "2026-06-12T18:44:03.652Z",
     "updatedAt": "2026-06-12T18:44:03.652Z"
-  },
-  {
-    "id": "meetup_1781304135142",
-    "title": "E2E 테스트 번개",
-    "date": "2026-06-13",
-    "startTime": "10:00",
-    "endTime": "12:00",
-    "region": "서울",
-    "venueName": "테스트 코트",
-    "venueAddress": "",
-    "maxPlayers": 4,
-    "skillLevel": "초보",
-    "fee": 0,
-    "description": "자동 테스트용 번개입니다",
-    "isBeginnerFriendly": true,
-    "hostId": "55d743bd-3657-4732-8104-d72059b9b26d",
-    "hostName": "로그인테스트",
-    "status": "open",
-    "currentPlayers": 2,
-    "createdAt": "2026-06-12T22:42:15.142Z",
-    "updatedAt": "2026-06-12T22:42:15.142Z"
   }
 ]

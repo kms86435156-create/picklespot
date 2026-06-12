@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { JetBrains_Mono } from "next/font/google";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import BottomNavBar from "@/components/layout/BottomNavBar";
 import ClientProviders from "@/components/layout/ClientProviders";
 import NoticeBanner from "@/components/home/NoticeBanner";
 import Script from "next/script";
@@ -30,18 +31,18 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pickleball-platform
 
 export const metadata: Metadata = {
   title: {
-    default: "PBL.SYS — 피클볼 올인원 플랫폼",
+    default: "PBL.SYS — 오늘 같이 칠 사람 찾기",
     template: "%s | PBL.SYS",
   },
   description:
-    "전국 피클볼 대회 일정, 피클볼장 찾기, 동호회 탐색까지. 피클볼의 모든 것, 한 곳에서.",
+    "내 근처에서 오늘 같이 피클볼 칠 사람을 찾아보세요. 번개 모집, 코트 찾기, 초보자 모임까지.",
   metadataBase: new URL(siteUrl),
   alternates: {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "PBL.SYS — 피클볼 올인원 플랫폼",
-    description: "전국 피클볼 대회 일정, 피클볼장 찾기, 동호회 탐색까지. 피클볼의 모든 것, 한 곳에서.",
+    title: "PBL.SYS — 오늘 같이 칠 사람 찾기",
+    description: "내 근처에서 오늘 같이 피클볼 칠 사람을 찾아보세요. 번개 모집, 코트 찾기, 초보자 모임까지.",
     type: "website",
     locale: "ko_KR",
     siteName: "PBL.SYS",
@@ -49,8 +50,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "PBL.SYS — 피클볼 올인원 플랫폼",
-    description: "전국 피클볼 대회 일정, 피클볼장 찾기, 동호회 탐색까지.",
+    title: "PBL.SYS — 오늘 같이 칠 사람 찾기",
+    description: "내 근처에서 오늘 같이 피클볼 칠 사람을 찾아보세요. 번개 모집, 코트 찾기, 초보자 모임까지.",
   },
   robots: {
     index: true,
@@ -79,7 +80,8 @@ export default function RootLayout({
           <div className="pt-14">
             <NoticeBanner />
           </div>
-          <main className="min-h-screen">{children}</main>
+          <main className="min-h-screen pb-16 lg:pb-0">{children}</main>
+          <BottomNavBar />
           <Footer />
         </ClientProviders>
       </body>

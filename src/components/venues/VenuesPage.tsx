@@ -231,15 +231,20 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
           <div>
             <p className="text-sm text-text-muted mb-4">{filtered.length}개 장소</p>
             {filtered.length === 0 ? (
-              <div className="bg-surface border border-dashed border-ui-border rounded-lg p-12 text-center">
-                <MapPin className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
-                <p className="text-text-muted font-medium mb-1">
-                  {venues.length === 0 ? "등록된 피클볼장이 없습니다" : "해당 조건의 피클볼장이 없습니다"}
+              <div className="bg-surface/50 border border-dashed border-ui-border rounded-2xl py-16 text-center px-4">
+                <div className="text-5xl mb-4">🏗️</div>
+                <h3 className="font-bold text-white text-lg mb-2">코트 데이터를 준비 중이에요</h3>
+                <p className="text-text-muted text-sm mb-6 max-w-sm mx-auto">
+                  {venues.length === 0 
+                    ? "전국 피클볼장 정보를 열심히 수집하고 있습니다. 알고 계신 코트가 있다면 제보해주세요!" 
+                    : "해당 조건에 맞는 피클볼장이 없습니다. 필터를 변경해보세요."}
                 </p>
-                <p className="text-xs text-text-muted/70 mb-4">다른 조건으로 검색해보세요.</p>
-                <Link href="/courts/register" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
-                  장소 등록 요청하기 <ArrowRight className="w-3 h-3" />
-                </Link>
+                {venues.length === 0 && (
+                  <Link href="mailto:contact@pblsys.com" className="inline-flex items-center gap-2 px-5 py-3 bg-brand-cyan text-dark font-black rounded-xl hover:bg-brand-cyan/90 transition-all">
+                    <MapPin className="w-4 h-4" />
+                    내 주변 코트 제보하기
+                  </Link>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

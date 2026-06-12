@@ -1,13 +1,18 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getMeetups, createEntity } from "@/lib/db";
+import { getMeetups, createMeetup } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const region = searchParams.get("region") || undefined;
-  const status = searchParams.get("status") || undefined;
-  const meetups = await getMeetups({ region, status });
+  const s = req.nextUrl.searchParams;
+  const filters = {
+    region: s.get("region") || undefined,
+    skillLevel: s.get("skillLevel") || undefined,
+    date: s.get("date") || undefined,
+    status: s.get("status") || undefined,
+    isBeginnerFriendly: s.get("beginnerOnly") === "1" ? true : undefined,
+  };
+  const meetups = await getMeetups(filters);
   return NextResponse.json({ meetups });
 }
 
@@ -15,52 +20,32 @@ export async function POST(req: NextRequest) {
   try {
     const session = await getUserSession();
     if (!session) {
-      return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
+      return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
     }
 
     const body = await req.json();
-    if (!body.title || !body.meetupDate || !body.meetupTime) {
-      return NextResponse.json({ error: "제목, 날짜, 시간은 필수입니다." }, { status: 400 });
+    const { title, date, startTime, endTime, region, venueName, venueAddress, maxPlayers, skillLevel, fee, description, isBeginnerFriendly } = body;
+
+    if (!title || !date || !startTime || !region) {
+      return NextResponse.json({ error: "필수 항목을 입력해주세요 (제목, 날짜, 시작 시간, 지역)" }, { status: 400 });
     }
 
-    const id = `mt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const meetup = {
-      id,
-      title: body.title,
-      region: body.region || "",
-      venueId: body.venueId || null,
-      venueName: body.venueName || "",
-      meetupDate: body.meetupDate,
-      meetupTime: body.meetupTime,
-      playType: body.playType || "자유",
+    const meetup = await createMeetup({
+      title,
+      date,
+      startTime,
+      endTime: endTime || "",
+      region,
+      venueName: venueName || "",
+      venueAddress: venueAddress || "",
+      maxPlayers: Number(maxPlayers) || 4,
+      skillLevel: skillLevel || "무관",
+      fee: Number(fee) || 0,
+      description: description || "",
+      isBeginnerFriendly: !!isBeginnerFriendly,
       hostId: session.id,
-      hostName: body.hostName || session.name,
-      hostPhone: body.hostPhone || "",
-      maxPlayers: Math.min(Math.max(body.maxPlayers || 4, 2), 20),
-      currentPlayers: 1, // host counts as participant
-      skillLevel: body.skillLevel || "무관",
-      fee: body.fee || 0,
-      description: body.description || "",
-      status: "open",
-      isFeatured: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    createEntity("meetups.json", meetup);
-
-    // Auto-add host as first participant
-    const hostParticipant = {
-      id: `mp_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      meetupId: id,
-      userId: session.id,
-      participantName: session.name,
-      participantPhone: body.hostPhone || "",
-      note: "",
-      status: "joined",
-      isHost: true,
-      createdAt: new Date().toISOString(),
-    };
-    createEntity("meetup-participants.json", hostParticipant);
+      hostName: session.name,
+    });
 
     return NextResponse.json({ success: true, meetup });
   } catch (e: any) {

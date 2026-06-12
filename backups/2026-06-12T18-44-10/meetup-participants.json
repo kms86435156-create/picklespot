@@ -38,13 +38,5 @@
     "userName": "신청자",
     "status": "confirmed",
     "joinedAt": "2026-06-12T18:44:03.982Z"
-  },
-  {
-    "id": "mp_1781304135588",
-    "meetupId": "meetup_1781304135142",
-    "userId": "8c61b872-3bd6-4ee0-8901-94ace994d09d",
-    "userName": "신청자",
-    "status": "confirmed",
-    "joinedAt": "2026-06-12T22:42:15.588Z"
   }
 ]

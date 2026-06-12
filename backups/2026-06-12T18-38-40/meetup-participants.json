@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mp_1781289239497",
+    "meetupId": "meetup_1781289239150",
+    "userId": "5a643b6e-16de-4d4a-92fc-6a31fd4c56e3",
+    "userName": "신청자",
+    "status": "confirmed",
+    "joinedAt": "2026-06-12T18:33:59.497Z"
+  },
+  {
+    "id": "mp_1781289475613",
+    "meetupId": "meetup_1781289475515",
+    "userId": "ffaadc63-2175-499a-98f8-bb0ea60a84bc",
+    "userName": "신청자",
+    "status": "confirmed",
+    "joinedAt": "2026-06-12T18:37:55.613Z"
+  }
+]

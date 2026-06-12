@@ -104,16 +104,17 @@ export default function ClubsContent({ clubs }: ClubsContentProps) {
 
         {/* Club Grid */}
         {filtered.length === 0 ? (
-          <div className="bg-surface border border-ui-border rounded-lg p-12 text-center">
-            <Users className="w-12 h-12 text-text-muted/20 mx-auto mb-3" />
-            <p className="text-text-muted font-medium mb-1">
-              {clubs.length === 0 ? "아직 등록된 동호회가 없습니다" : "조건에 맞는 동호회가 없습니다"}
+          <div className="bg-surface/50 border border-dashed border-ui-border rounded-2xl py-16 text-center px-4">
+            <div className="text-5xl mb-4">👥</div>
+            <h3 className="font-bold text-white text-lg mb-2">아직 등록된 동호회가 없어요</h3>
+            <p className="text-text-muted text-sm mb-6 max-w-sm mx-auto">
+              {clubs.length === 0 
+                ? "동호회를 운영하고 계신가요? 첫 번째 동호회를 등록하고 회원들을 모집해보세요!" 
+                : "조건에 맞는 동호회가 없습니다. 다른 조건으로 검색해보세요."}
             </p>
-            <p className="text-xs text-text-muted/70 mb-4">
-              {clubs.length === 0 ? "첫 번째 동호회를 등록해보세요!" : "다른 조건으로 검색하거나, 동호회를 등록해보세요."}
-            </p>
-            <Link href="/signup/organizer" className="inline-flex items-center gap-1 text-sm text-brand-cyan hover:underline font-bold">
-              동호회 등록하기 →
+            <Link href="/signup/organizer" className="inline-flex items-center gap-2 px-5 py-3 bg-brand-cyan text-dark font-black rounded-xl hover:bg-brand-cyan/90 transition-all">
+              <Users className="w-4 h-4" />
+              동호회 등록하기
             </Link>
           </div>
         ) : (

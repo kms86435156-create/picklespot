@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { logger } from "@/lib/logger";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -51,10 +52,12 @@ export default function SignupPage() {
         setError(data.error || "회원가입에 실패했습니다.");
         return;
       }
+      logger.event("SIGNUP_SUCCESS", { email: form.email });
       await refresh();
       router.push("/onboarding");
       router.refresh();
-    } catch {
+    } catch (err) {
+      logger.error(err, "SignupPage.handleSubmit");
       setError("서버에 연결할 수 없습니다.");
     } finally {
       setLoading(false);
