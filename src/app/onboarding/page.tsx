@@ -31,7 +31,7 @@ const PLAY_STYLES = [
   { value: "둘다", label: "둘 다", desc: "상관없어요!" },
 ];
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -43,6 +43,15 @@ export default function OnboardingPage() {
   const [skillLevel, setSkillLevel] = useState("");
   const [preferredTimes, setPreferredTimes] = useState<string[]>([]);
   const [playStyle, setPlayStyle] = useState("");
+  const [recommendedMeetup, setRecommendedMeetup] = useState<any>(null);
+
+  useEffect(() => {
+    if (step === 5 && !recommendedMeetup) {
+      fetch("/api/meetups?beginnerOnly=1").then(r => r.json()).then(d => {
+        if(d.meetups && d.meetups.length > 0) setRecommendedMeetup(d.meetups[0]);
+      }).catch(console.error);
+    }
+  }, [step, recommendedMeetup]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -84,6 +93,7 @@ export default function OnboardingPage() {
     if (step === 2) return !!skillLevel;
     if (step === 3) return preferredTimes.length > 0;
     if (step === 4) return !!playStyle;
+    if (step === 5) return true;
     return false;
   }
 
@@ -223,6 +233,52 @@ export default function OnboardingPage() {
                   <span>스타일: <span className="text-white">{playStyle}</span></span>
                   <span>시간: <span className="text-white">{preferredTimes.length}개 선택</span></span>
                 </div>
+              </div>
+            )}
+          </StepContainer>
+        )}
+
+        {/* Step 5: 추천 번개 (Magic Moment) */}
+        {step === 5 && (
+          <StepContainer
+            icon={<Sparkles className="w-6 h-6 text-brand-cyan" />}
+            title="딱 맞는 모임을 찾았어요!"
+            subtitle="가입 기념, 부담 없이 첫 피클볼을 경험해보세요"
+          >
+            {recommendedMeetup ? (
+              <div className="p-5 bg-surface border border-brand-cyan/30 rounded-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="px-2 py-1 bg-brand-cyan/20 text-brand-cyan text-xs font-bold rounded">초보 환영</span>
+                  <span className="text-xs text-text-muted">{recommendedMeetup.date}</span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-lg leading-tight">{recommendedMeetup.title}</h3>
+                  <p className="text-sm text-text-muted mt-1">{recommendedMeetup.venueName}</p>
+                </div>
+                
+                <div className="pt-3 border-t border-ui-border">
+                  <p className="text-sm text-white/90 leading-relaxed whitespace-pre-wrap line-clamp-3">
+                    {recommendedMeetup.description}
+                  </p>
+                </div>
+
+                <button 
+                  onClick={async () => {
+                    await handleComplete();
+                    router.push(`/matches/${recommendedMeetup.id}`);
+                  }}
+                  className="w-full mt-4 py-3 bg-brand-cyan text-dark font-bold rounded-lg hover:bg-brand-cyan/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(45,212,191,0.3)]"
+                >
+                  지금 바로 1초 만에 참가 신청하기 <ArrowRight className="w-4 h-4" />
+                </button>
+                <p className="text-center text-[10px] text-text-muted mt-2">버튼을 누르면 프로필이 저장되고 모임 상세 페이지로 이동합니다.</p>
+              </div>
+            ) : (
+              <div className="p-8 text-center bg-surface border border-ui-border rounded-xl">
+                <p className="text-text-muted text-sm mb-4">현재 추천할 만한 초보 모임을 찾고 있어요.</p>
+                <button onClick={handleComplete} className="px-4 py-2 bg-brand-cyan text-dark text-sm font-bold rounded-lg">
+                  메인 화면으로 가기
+                </button>
               </div>
             )}
           </StepContainer>
