@@ -1,7 +1,7 @@
-﻿export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin, isSupabaseEnabled } from "@/lib/supabase";
-import { readJSON, writeJSON, createEntity, toSnake, toCamel } from "@/lib/db";
+import { readJSON, createEntity, toSnake, toCamel } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
 /** GET /api/community?category=xxx&region=xxx&sort=recent */
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ posts: [] });
     }
     
-    let posts = data.map(toCamel);
+    const posts = data.map(toCamel);
     if (sort === "comments") {
       posts.sort((a: any, b: any) => (b.comments?.length || 0) - (a.comments?.length || 0));
     }
@@ -87,7 +87,7 @@ export async function PATCH(req: NextRequest) {
   const session = await getUserSession();
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
-  const { postId, action, commentText, reason } = await req.json();
+  const { postId, action, commentText } = await req.json();
 
   if (isSupabaseEnabled) {
     const { data: post, error: fetchErr } = await supabaseAdmin.from("community_posts").select("*").eq("id", postId).single();

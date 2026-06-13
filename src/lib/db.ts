@@ -69,7 +69,7 @@ export function toSnake(obj: any): any {
   return result;
 }
 
-function toCamel(obj: any): any {
+export function toCamel(obj: any): any {
   if (!obj) return obj;
   const result: any = {};
   for (const [k, v] of Object.entries(obj)) {
