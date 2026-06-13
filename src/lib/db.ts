@@ -84,7 +84,7 @@ export function toCamel(obj: any): any {
 // ═══════════════════════════════
 export async function getTournaments(filters?: { region?: string; status?: string; keyword?: string }) {
   if (isSupabaseEnabled) {
-    let q = db!.from("tournaments").select("*");
+    let q = db!.from("tournaments").select("*").eq("is_verified", true);
     if (filters?.region) q = q.eq("region", filters.region);
     if (filters?.status) q = q.eq("status", filters.status);
     if (filters?.keyword) q = q.ilike("title", `%${filters.keyword}%`);
@@ -111,7 +111,7 @@ export async function getTournament(id: string) {
 // ═══════════════════════════════
 export async function getVenues(filters?: { region?: string; keyword?: string }) {
   if (isSupabaseEnabled) {
-    let q = db!.from("venues").select("*");
+    let q = db!.from("venues").select("*").eq("is_verified", true);
     if (filters?.region) q = q.eq("region", filters.region);
     if (filters?.keyword) q = q.ilike("name", `%${filters.keyword}%`);
     const { data } = await q.order("name");
