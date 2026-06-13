@@ -3,7 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Search, Car, Sun, Home, Phone, Clock, ChevronRight, ArrowRight, Map, List, Crosshair } from "lucide-react";
+import { MapPin, Search, Car, Sun, Home, Phone, Clock, ChevronRight, Map, List, Crosshair } from "lucide-react";
 import KakaoMap, { getDistanceKm } from "@/components/map/KakaoMap";
 import type { MapPin as MapPinType } from "@/components/map/KakaoMap";
 

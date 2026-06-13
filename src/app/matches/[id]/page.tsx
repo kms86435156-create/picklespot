@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, MapPin, Calendar, Users, Clock, ChevronLeft,
-  CheckCircle, AlertCircle, User, Share2, Info, XCircle
+  CheckCircle, AlertCircle, User, Share2, Info
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { logger } from "@/lib/logger";

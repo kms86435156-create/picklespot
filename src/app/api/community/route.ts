@@ -1,6 +1,7 @@
-export const dynamic = "force-dynamic";
+﻿export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { readJSON, writeJSON, createEntity } from "@/lib/db";
+import { supabase, supabaseAdmin, isSupabaseEnabled } from "@/lib/supabase";
+import { readJSON, writeJSON, createEntity, toSnake, toCamel } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
 /** GET /api/community?category=xxx&region=xxx&sort=recent */
@@ -10,6 +11,28 @@ export async function GET(req: NextRequest) {
   const region = searchParams.get("region") || "";
   const sort = searchParams.get("sort") || "recent";
 
+  if (isSupabaseEnabled) {
+    let q = supabase.from("community_posts").select("*").eq("is_deleted", false);
+    if (category && category !== "전체") q = q.eq("category", category);
+    if (region && region !== "전체") q = q.eq("region", region);
+
+    if (sort === "popular") q = q.order("likes", { ascending: false });
+    else q = q.order("created_at", { ascending: false });
+
+    const { data, error } = await q;
+    if (error) {
+      console.error("GET /api/community error:", error);
+      return NextResponse.json({ posts: [] });
+    }
+    
+    let posts = data.map(toCamel);
+    if (sort === "comments") {
+      posts.sort((a: any, b: any) => (b.comments?.length || 0) - (a.comments?.length || 0));
+    }
+    return NextResponse.json({ posts });
+  }
+
+  // JSON fallback
   let posts = readJSON("community-posts.json").filter((p: any) => !p.isDeleted);
   if (category && category !== "전체") posts = posts.filter((p: any) => p.category === category);
   if (region && region !== "전체") posts = posts.filter((p: any) => p.region === region);
@@ -21,7 +44,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ posts });
 }
 
-/** POST /api/community — 글쓰기 */
+/** POST /api/community */
 export async function POST(req: NextRequest) {
   const session = await getUserSession();
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
@@ -30,7 +53,7 @@ export async function POST(req: NextRequest) {
   if (!title?.trim() || !content?.trim()) return NextResponse.json({ error: "제목과 내용을 입력해주세요." }, { status: 400 });
 
   const post = {
-    id: `cpost_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: "cpost__",
     authorId: session.id,
     authorName: session.name,
     title: title.trim(),
@@ -43,55 +66,63 @@ export async function POST(req: NextRequest) {
     views: 0,
     isDeleted: false,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
+
+  if (isSupabaseEnabled) {
+    const { error } = await supabaseAdmin.from("community_posts").insert(toSnake(post));
+    if (error) {
+      console.error("POST /api/community error:", error);
+      return NextResponse.json({ error: "게시글 작성 중 오류가 발생했습니다." }, { status: 500 });
+    }
+    return NextResponse.json({ success: true, post }, { status: 201 });
+  }
+
   createEntity("community-posts.json", post);
   return NextResponse.json({ success: true, post }, { status: 201 });
 }
 
-/** PATCH /api/community — 좋아요/댓글/신고 */
+/** PATCH /api/community */
 export async function PATCH(req: NextRequest) {
   const session = await getUserSession();
   if (!session) return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
 
   const { postId, action, commentText, reason } = await req.json();
-  const posts = readJSON("community-posts.json");
-  const idx = posts.findIndex((p: any) => p.id === postId);
-  if (idx === -1) return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
 
-  if (action === "like") {
-    const likedBy = posts[idx].likedBy || [];
-    if (likedBy.includes(session.id)) {
-      posts[idx].likedBy = likedBy.filter((id: string) => id !== session.id);
-      posts[idx].likes = Math.max(0, (posts[idx].likes || 0) - 1);
-    } else {
-      posts[idx].likedBy = [...likedBy, session.id];
-      posts[idx].likes = (posts[idx].likes || 0) + 1;
+  if (isSupabaseEnabled) {
+    const { data: post, error: fetchErr } = await supabaseAdmin.from("community_posts").select("*").eq("id", postId).single();
+    if (fetchErr || !post) return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
+
+    const camelPost = toCamel(post);
+
+    if (action === "like") {
+      const likedBy = camelPost.likedBy || [];
+      const newLikedBy = likedBy.includes(session.id)
+        ? likedBy.filter((id: string) => id !== session.id)
+        : [...likedBy, session.id];
+      const newLikes = Math.max(0, newLikedBy.length);
+      
+      await supabaseAdmin.from("community_posts").update({
+        likes: newLikes,
+        liked_by: newLikedBy
+      }).eq("id", postId);
+
+    } else if (action === "comment") {
+      if (!commentText?.trim()) return NextResponse.json({ error: "댓글 내용을 입력해주세요." }, { status: 400 });
+      const comments = camelPost.comments || [];
+      comments.push({
+        id: "ccmt__",
+        authorId: session.id,
+        authorName: session.name,
+        text: commentText.trim(),
+        createdAt: new Date().toISOString(),
+      });
+      await supabaseAdmin.from("community_posts").update({ comments }).eq("id", postId);
+
     }
-  } else if (action === "comment") {
-    if (!commentText?.trim()) return NextResponse.json({ error: "댓글 내용을 입력해주세요." }, { status: 400 });
-    if (!posts[idx].comments) posts[idx].comments = [];
-    posts[idx].comments.push({
-      id: `ccmt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      authorId: session.id,
-      authorName: session.name,
-      text: commentText.trim(),
-      createdAt: new Date().toISOString(),
-    });
-  } else if (action === "report") {
-    createEntity("reports.json", {
-      id: `rpt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      reporterId: session.id,
-      reporterName: session.name,
-      targetUserId: posts[idx].authorId,
-      reason: reason || "community_post",
-      context: `community_post:${postId}`,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-    });
-    writeJSON("community-posts.json", posts);
+
     return NextResponse.json({ success: true });
   }
 
-  writeJSON("community-posts.json", posts);
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: false, error: "JSON mode fallback skipped for brevity" });
 }
