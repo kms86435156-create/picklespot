@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const sort = searchParams.get("sort") || "recent";
 
   if (isSupabaseEnabled) {
-    let q = supabase.from("community_posts").select("*").eq("is_deleted", false);
+    let q = supabase!.from("community_posts").select("*").eq("is_deleted", false);
     if (category && category !== "전체") q = q.eq("category", category);
     if (region && region !== "전체") q = q.eq("region", region);
 
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (isSupabaseEnabled) {
-    const { error } = await supabaseAdmin.from("community_posts").insert(toSnake(post));
+    const { error } = await supabaseAdmin!.from("community_posts").insert(toSnake(post));
     if (error) {
       console.error("POST /api/community error:", error);
       return NextResponse.json({ error: "게시글 작성 중 오류가 발생했습니다." }, { status: 500 });
@@ -90,7 +90,7 @@ export async function PATCH(req: NextRequest) {
   const { postId, action, commentText } = await req.json();
 
   if (isSupabaseEnabled) {
-    const { data: post, error: fetchErr } = await supabaseAdmin.from("community_posts").select("*").eq("id", postId).single();
+    const { data: post, error: fetchErr } = await supabaseAdmin!.from("community_posts").select("*").eq("id", postId).single();
     if (fetchErr || !post) return NextResponse.json({ error: "게시글을 찾을 수 없습니다." }, { status: 404 });
 
     const camelPost = toCamel(post);
@@ -102,7 +102,7 @@ export async function PATCH(req: NextRequest) {
         : [...likedBy, session.id];
       const newLikes = Math.max(0, newLikedBy.length);
       
-      await supabaseAdmin.from("community_posts").update({
+      await supabaseAdmin!.from("community_posts").update({
         likes: newLikes,
         liked_by: newLikedBy
       }).eq("id", postId);
@@ -117,7 +117,7 @@ export async function PATCH(req: NextRequest) {
         text: commentText.trim(),
         createdAt: new Date().toISOString(),
       });
-      await supabaseAdmin.from("community_posts").update({ comments }).eq("id", postId);
+      await supabaseAdmin!.from("community_posts").update({ comments }).eq("id", postId);
 
     }
 
