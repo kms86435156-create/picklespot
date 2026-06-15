@@ -37,7 +37,7 @@ export function generateBracket(tournamentId: string, participants: any[]) {
   // Create matches round by round
   for (let round = 1; round <= totalRounds; round++) {
     const numMatches = p / Math.pow(2, round);
-    const currentRoundMatches = [];
+    const currentRoundMatches: any[] = [];
 
     for (let i = 0; i < numMatches; i++) {
       const matchId = `match_${Date.now()}_${matchIdCounter++}`;
