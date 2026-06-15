@@ -1,0 +1,52 @@
+[
+  {
+    "id": "lesson_001",
+    "coachName": "김진수",
+    "region": "서울",
+    "lessonType": "그룹",
+    "price": "1회 20,000원 (4인 기준)",
+    "intro": "피클볼 입문자 전문. 기초 자세부터 게임 규칙까지 4주 완성 커리큘럼.",
+    "contact": "카카오톡: pickle_coach_kim",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "lesson_002",
+    "coachName": "박서연",
+    "region": "서울",
+    "lessonType": "개인",
+    "price": "1회 50,000원",
+    "intro": "전직 배드민턴 선수 출신. 스매시·드롭샷 등 기술 교정 집중 레슨.",
+    "contact": "010-1234-5678",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "lesson_003",
+    "coachName": "이동현",
+    "region": "경기",
+    "lessonType": "그룹",
+    "price": "1회 15,000원 (6인 기준)",
+    "intro": "용인·수원 지역 주말 그룹레슨. 초보자 환영, 장비 대여 가능.",
+    "contact": "카카오톡: dh_pickle",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "lesson_004",
+    "coachName": "최민정",
+    "region": "부산",
+    "lessonType": "개인",
+    "price": "1회 40,000원",
+    "intro": "해운대 지역 피클볼 레슨. 시니어·입문자 맞춤 수업.",
+    "contact": "010-9876-5432",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  },
+  {
+    "id": "lesson_005",
+    "coachName": "정우성",
+    "region": "인천",
+    "lessonType": "그룹",
+    "price": "1회 18,000원 (4인 기준)",
+    "intro": "송도 J필드에서 진행. 테니스 경력 10년, 피클볼 전환 코치.",
+    "contact": "카카오톡: wooseong_pb",
+    "createdAt": "2026-06-15T00:00:00.000Z"
+  }
+]
