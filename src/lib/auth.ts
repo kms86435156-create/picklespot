@@ -100,7 +100,7 @@ export async function getUserSession(): Promise<AuthPayload | null> {
   const token = getUserCookie();
   if (!token) return null;
   const payload = await verifyToken(token);
-  if (!payload || payload.role !== "user") return null;
+  if (!payload || !["user", "organizer"].includes(payload.role)) return null;
   return payload;
 }
 
