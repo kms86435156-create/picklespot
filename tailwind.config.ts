@@ -15,6 +15,7 @@ const config: Config = {
         "brand-cyan": "#00D4FF",
         "text-main": "#FFFFFF",
         "text-muted": "#8A8A93",
+        "ui-dark": "#1A1A24",
         "ui-border": "rgba(255, 255, 255, 0.12)",
         "ui-bg": "rgba(15, 15, 20, 0.6)",
       },
