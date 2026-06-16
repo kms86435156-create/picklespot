@@ -33,7 +33,9 @@ function toSnake(obj: any): any {
   const result: any = {};
   for (const [k, v] of Object.entries(obj)) {
     const snakeKey = k.replace(/[A-Z]/g, m => "_" + m.toLowerCase());
-    result[snakeKey] = TIMESTAMP_COLS.has(snakeKey) && v === "" ? null : v;
+    // timestamp 컬럼에 빈 문자열이면 키 자체를 제외 (DB DEFAULT 사용)
+    if (TIMESTAMP_COLS.has(snakeKey) && (v === "" || v == null)) continue;
+    result[snakeKey] = v;
   }
   return result;
 }
