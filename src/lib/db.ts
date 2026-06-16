@@ -112,7 +112,7 @@ export async function createTournament(tournament: any) {
   const id = `tournament_${Date.now()}`;
   const now = new Date().toISOString();
   // DB에 없는 필드 제거
-  const entity = { id, title: tournament.title, description: tournament.description || "", location: tournament.location || "", startDate: tournament.startDate || null, fee: tournament.fee || 0, maxParticipants: tournament.maxParticipants || 0, status: "open", createdAt: now, updatedAt: now };
+  const entity = { id, title: tournament.title, description: tournament.description || "", venueName: tournament.location || "", startDate: tournament.startDate || null, fee: tournament.fee || 0, maxParticipants: tournament.maxParticipants || 0, status: "open", createdAt: now, updatedAt: now };
   if (isSupabaseEnabled) {
     const { data, error } = await db!.from("tournaments").insert(toSnake(entity)).select().single();
     if (error) throw new Error(error.message);
