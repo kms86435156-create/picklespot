@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { MapPin, Calendar, Users, Phone, Clock, ArrowLeft, ArrowRight, CreditCard, ExternalLink } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
 import RegistrationFormModal from "./RegistrationFormModal";
+import BracketViewer from "./BracketViewer";
 import { useAuth } from "@/components/auth/AuthProvider";
 
 function daysUntil(d: string) { if (!d) return 999; const ms = new Date(d).getTime(); return isNaN(ms) ? 999 : Math.ceil((ms - Date.now()) / 86400000); }
@@ -22,8 +23,8 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
   ) : null;
 }
 
-export default function TournamentDetailPage({ tournament: t, similarTournaments, matchingVenue }: {
-  tournament: any; similarTournaments: any[]; matchingVenue?: any;
+export default function TournamentDetailPage({ tournament: t, similarTournaments, matchingVenue, matches }: {
+  tournament: any; similarTournaments: any[]; matchingVenue?: any; matches?: any[];
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -104,6 +105,14 @@ export default function TournamentDetailPage({ tournament: t, similarTournaments
               <div className="bg-surface border border-ui-border rounded-lg p-5">
                 <h2 className="text-sm font-bold text-text-muted mb-3 uppercase tracking-wider">상세 안내</h2>
                 <div className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">{t.description}</div>
+              </div>
+            )}
+
+            {/* 대진표 */}
+            {matches && matches.length > 0 && (
+              <div className="bg-surface border border-ui-border rounded-lg p-5">
+                <h2 className="text-sm font-bold text-text-muted mb-3 uppercase tracking-wider">대진표</h2>
+                <BracketViewer matches={matches} isAdmin={false} />
               </div>
             )}
 

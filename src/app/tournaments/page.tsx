@@ -10,9 +10,10 @@ export const metadata: Metadata = {
     description: "전국 피클볼 대회 일정을 한눈에. 접수중인 대회를 찾고 바로 신청하세요.",
   },
 };
-export const dynamic = "force-dynamic";
+
 
 export default async function Page() {
-  const tournaments = await getTournaments();
+  // Only show public tournaments on the listing page
+  const tournaments = await getTournaments({ visibility: "public" });
   return <TournamentsPage tournaments={tournaments} />;
 }

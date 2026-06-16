@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "전국 피클볼장을 지역별로 검색하세요. 코트 수, 운영시간, 편의시설 정보 제공.",
   },
 };
-export const dynamic = "force-dynamic";
+
 
 export default async function Page() {
   const venues = await getVenues();

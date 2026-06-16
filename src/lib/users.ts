@@ -20,6 +20,9 @@ export interface User {
   playStyle: string; // "복식" | "단식" | "둘다" | ""
   onboardingCompleted: boolean;
   passwordHash: string;
+  status: string; // "active" | "suspended" | "withdrawn"
+  suspendedReason: string;
+  suspendedAt: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -88,6 +91,9 @@ export async function createUser(
     playStyle: "",
     onboardingCompleted: false,
     passwordHash: await hashPassword(password),
+    status: "active",
+    suspendedReason: "",
+    suspendedAt: "",
     createdAt: now,
     updatedAt: now,
   };
@@ -126,4 +132,99 @@ export async function updateUser(id: string, updates: Partial<Omit<User, "id" | 
   users[idx] = { ...users[idx], ...safeUpdates };
   writeJSON(FILE, users);
   return users[idx];
+}
+
+// ═══ 관리자용 함수 ═══
+
+export interface UserListFilters {
+  keyword?: string;
+  role?: string;
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface UserListResult {
+  items: Omit<User, "passwordHash">[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+function stripPassword(user: any): Omit<User, "passwordHash"> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { passwordHash, password_hash, ...rest } = user;
+  return rest;
+}
+
+export async function listUsers(filters: UserListFilters = {}): Promise<UserListResult> {
+  const page = filters.page || 1;
+  const limit = filters.limit || 20;
+
+  if (isSupabaseEnabled && supabaseAdmin) {
+    let q = supabaseAdmin.from(TABLE).select("*", { count: "exact" });
+    if (filters.keyword) {
+      q = q.or(`name.ilike.%${filters.keyword}%,email.ilike.%${filters.keyword}%,phone.ilike.%${filters.keyword}%`);
+    }
+    if (filters.role) q = q.eq("role", filters.role);
+    if (filters.status) q = q.eq("status", filters.status);
+    q = q.order("created_at", { ascending: false });
+    q = q.range((page - 1) * limit, page * limit - 1);
+    const { data, count } = await q;
+    const total = count || 0;
+    return {
+      items: (data || []).map((u: any) => stripPassword(toCamel(u))),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  let users = readJSON(FILE);
+  if (filters.keyword) {
+    const kw = filters.keyword.toLowerCase();
+    users = users.filter((u: any) =>
+      u.name?.toLowerCase().includes(kw) ||
+      u.email?.toLowerCase().includes(kw) ||
+      u.phone?.includes(kw)
+    );
+  }
+  if (filters.role) users = users.filter((u: any) => u.role === filters.role);
+  if (filters.status) users = users.filter((u: any) => (u.status || "active") === filters.status);
+  users.sort((a: any, b: any) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+
+  const total = users.length;
+  const items = users.slice((page - 1) * limit, page * limit).map(stripPassword);
+  return { items, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+}
+
+export async function getUserDetail(id: string): Promise<Omit<User, "passwordHash"> | null> {
+  const user = await findUserById(id);
+  if (!user) return null;
+  return stripPassword(user);
+}
+
+export async function suspendUser(id: string, reason: string): Promise<User | null> {
+  return updateUser(id, {
+    status: "suspended",
+    suspendedReason: reason,
+    suspendedAt: new Date().toISOString(),
+  });
+}
+
+export async function activateUser(id: string): Promise<User | null> {
+  return updateUser(id, {
+    status: "active",
+    suspendedReason: "",
+    suspendedAt: "",
+  });
+}
+
+export async function getUserCount(): Promise<{ total: number; active: number; suspended: number }> {
+  if (isSupabaseEnabled && supabaseAdmin) {
+    const { count: total } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true });
+    const { count: suspended } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "suspended");
+    const t = total || 0;
+    const s = suspended || 0;
+    return { total: t, active: t - s, suspended: s };
+  }
+  const users = readJSON(FILE);
+  const suspended = users.filter((u: any) => u.status === "suspended").length;
+  return { total: users.length, active: users.length - suspended, suspended };
 }

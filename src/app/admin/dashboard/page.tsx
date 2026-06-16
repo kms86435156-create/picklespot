@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Trophy, MapPin, Users, ClipboardList, Clock, ArrowRight } from "lucide-react";
+import { Trophy, MapPin, Users, ClipboardList, Clock, ArrowRight, UserCog, MessageSquareText } from "lucide-react";
 
 interface DashboardData {
   stats: {
@@ -13,6 +13,8 @@ interface DashboardData {
     meetups: { total: number; open: number };
     bookingRequests: { total: number; pending: number };
     leads: { total: number; new: number };
+    users: { total: number; active: number; suspended: number };
+    feedbacks: { total: number; pending: number; inProgress: number; resolved: number };
   };
   recentActivity: { type: string; label: string; name: string; date: string; id: string }[];
 }
@@ -83,7 +85,46 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <StatCard
+          icon={<UserCog className="w-5 h-5" />}
+          iconColor="text-orange-400"
+          title="가입 회원"
+          value={stats.users?.total || 0}
+          details={[
+            { label: "활성", value: stats.users?.active || 0, color: "text-green-400" },
+            { label: "정지", value: stats.users?.suspended || 0, color: "text-red-400" },
+          ]}
+          href="/admin/users"
+          highlight={(stats.users?.suspended || 0) > 0}
+        />
+        <StatCard
+          icon={<MessageSquareText className="w-5 h-5" />}
+          iconColor="text-pink-400"
+          title="미처리 피드백"
+          value={stats.feedbacks?.pending || 0}
+          details={[
+            { label: "전체", value: stats.feedbacks?.total || 0, color: "text-text-muted" },
+            { label: "처리중", value: stats.feedbacks?.inProgress || 0, color: "text-blue-400" },
+          ]}
+          href="/admin/feedbacks"
+          highlight={(stats.feedbacks?.pending || 0) > 0}
+        />
+        <StatCard
+          icon={<ClipboardList className="w-5 h-5" />}
+          iconColor="text-yellow-400"
+          title="대기중 등록 요청"
+          value={stats.registrations.pending}
+          details={[
+            { label: "전체", value: stats.registrations.total, color: "text-text-muted" },
+          ]}
+          href="/admin/registrations"
+          highlight={stats.registrations.pending > 0}
+        />
+      </div>
+
+      {/* Content Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <StatCard
           icon={<Trophy className="w-5 h-5" />}
           iconColor="text-brand-cyan"
@@ -108,17 +149,6 @@ export default function AdminDashboardPage() {
           title="등록된 동호회"
           value={stats.clubs.total}
           href="/admin/clubs"
-        />
-        <StatCard
-          icon={<ClipboardList className="w-5 h-5" />}
-          iconColor="text-yellow-400"
-          title="대기중 등록 요청"
-          value={stats.registrations.pending}
-          details={[
-            { label: "전체", value: stats.registrations.total, color: "text-text-muted" },
-          ]}
-          href="/admin/registrations"
-          highlight={stats.registrations.pending > 0}
         />
       </div>
 

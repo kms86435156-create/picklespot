@@ -29,6 +29,15 @@ const jetbrainsMono = JetBrains_Mono({
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://pickleball-platform-brown.vercel.app";
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+  themeColor: "#050507", // Dark theme background color
+};
+
 export const metadata: Metadata = {
   title: {
     default: "PBL.SYS — 오늘 같이 칠 사람 찾기",

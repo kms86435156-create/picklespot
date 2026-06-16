@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Trophy, MapPin, Users, ClipboardList,
   UserPlus, Megaphone, Settings, ExternalLink, Menu, X, Inbox,
+  UserCog, MessageSquareText,
 } from "lucide-react";
 import AdminLogoutButton from "./AdminLogoutButton";
 
@@ -25,8 +26,10 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    label: "운영",
+    label: "운영 관리",
     items: [
+      { href: "/admin/users", label: "회원 관리", icon: UserCog },
+      { href: "/admin/feedbacks", label: "피드백 관리", icon: MessageSquareText },
       { href: "/admin/requests", label: "등록 요청", icon: Inbox },
       { href: "/admin/pre-registrations", label: "사전등록 신청", icon: UserPlus },
       { href: "/admin/registrations", label: "대회 접수 관리", icon: ClipboardList },

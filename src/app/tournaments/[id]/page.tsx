@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { getTournament, getTournaments, getVenues } from "@/lib/db";
+import { getTournament, getTournaments, getVenues, getTournamentMatches } from "@/lib/db";
 import TournamentDetailPage from "@/components/tournaments/TournamentDetailPage";
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
+
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const t = await getTournament(params.id);
@@ -21,11 +21,11 @@ export default async function Page({ params }: { params: { id: string } }) {
   const tournament = await getTournament(params.id);
   if (!tournament) notFound();
 
-  const [allTournaments, venues] = await Promise.all([getTournaments(), getVenues()]);
+  const [allTournaments, venues, matches] = await Promise.all([getTournaments(), getVenues(), getTournamentMatches(params.id)]);
   const similar = allTournaments
     .filter(t => t.id !== tournament.id && (t.region === tournament.region || t.eventTypes === tournament.eventTypes) && t.status !== "completed" && t.status !== "cancelled")
     .slice(0, 3);
   const matchingVenue = venues.find((v: any) => tournament.venueName && v.name?.includes(tournament.venueName?.split(" ")[0]));
 
-  return <TournamentDetailPage tournament={tournament} similarTournaments={similar} matchingVenue={matchingVenue} />;
+  return <TournamentDetailPage tournament={tournament} similarTournaments={similar} matchingVenue={matchingVenue} matches={matches} />;
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
     description: "전국 피클볼 동호회 모집 정보를 한눈에.",
   },
 };
-export const dynamic = "force-dynamic";
+
 
 export default async function Page() {
   const clubs = await getClubs();

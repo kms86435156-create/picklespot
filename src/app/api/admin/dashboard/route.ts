@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getTournaments, getVenues, getClubs, getMeetups, getBookingRequests, readJSON } from "@/lib/db";
+import { getUserCount } from "@/lib/users";
+import { getFeedbackCounts } from "@/lib/feedbacks";
 
 export async function GET(_req: NextRequest) {
-  const [tournaments, venues, clubs, meetups, bookingRequests, leads, registrations] = await Promise.all([
+  const [tournaments, venues, clubs, meetups, bookingRequests, leads, registrations, userCounts, feedbackCounts] = await Promise.all([
     getTournaments(),
     getVenues(),
     getClubs(),
@@ -11,6 +13,8 @@ export async function GET(_req: NextRequest) {
     getBookingRequests(),
     Promise.resolve(readJSON("leads.json")),
     Promise.resolve(readJSON("registrations.json")),
+    getUserCount(),
+    getFeedbackCounts(),
   ]);
 
   // 최근 활동: 각 엔티티에서 createdAt/updatedAt 기준 최근 항목 수집
@@ -73,6 +77,8 @@ export async function GET(_req: NextRequest) {
       meetups: { total: meetups.length, open: meetups.filter((m: any) => m.status === "open").length },
       bookingRequests: { total: bookingRequests.length, pending: bookingRequests.filter((r: any) => r.status === "pending").length },
       leads: { total: leads.length, new: leads.filter((l: any) => l.status === "new").length },
+      users: userCounts,
+      feedbacks: feedbackCounts,
     },
     recentActivity: recent,
   });

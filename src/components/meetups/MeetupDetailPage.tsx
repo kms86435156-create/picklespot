@@ -57,7 +57,7 @@ export default function MeetupDetailPage({ meetup: m, participants }: { meetup: 
               {m.skillLevel && <span className="text-[11px] text-text-muted bg-white/5 px-2 py-0.5 rounded-sm border border-ui-border">{m.skillLevel}</span>}
             </div>
             <h1 className="text-2xl md:text-3xl font-black mb-3">{m.title}</h1>
-            {m.description && <p className="text-text-muted text-sm mb-5 whitespace-pre-line">{m.description.replace(/\\n/g, "\n")}</p>}
+            {m.description && <p className="text-text-muted text-sm mb-5 whitespace-pre-line">{m.description}</p>}
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
               <InfoBox icon={<Calendar className="w-4 h-4" />} label="날짜" value={m.meetupDate} />

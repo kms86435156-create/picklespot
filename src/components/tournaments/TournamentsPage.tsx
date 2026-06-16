@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Trophy, MapPin, Calendar, Search, Users, Clock, ArrowRight, Star, Mail, Bell } from "lucide-react";
+import { Trophy, MapPin, Calendar, Search, Users, Clock, ArrowRight, Star, Mail, Bell, Key } from "lucide-react";
 
 const REGIONS = ["전체", "서울", "경기", "인천", "부산", "대구", "대전", "광주", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
 const STATUSES = [
@@ -42,6 +42,14 @@ export default function TournamentsPage({ tournaments }: { tournaments: any[] })
   const [statusFilter, setStatusFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState(0);
   const [keyword, setKeyword] = useState("");
+
+  const handleInviteCode = () => {
+    const code = prompt("초대 코드를 입력하세요:");
+    if (code) {
+      // For MVP, we can redirect to a check endpoint or try to fetch the id
+      window.location.href = `/tournaments/invite?code=${code.toUpperCase()}`;
+    }
+  };
 
   // 이번 주 마감 대회
   const closingSoon = useMemo(() =>
@@ -94,10 +102,18 @@ export default function TournamentsPage({ tournaments }: { tournaments: any[] })
               <p className="text-sm text-text-muted">대회를 찾고 바로 신청하세요</p>
             </div>
           </div>
-          <div className="flex gap-6 mt-4 text-sm">
+          <div className="flex gap-6 mt-4 text-sm mb-6">
             <span><span className="text-brand-cyan font-bold text-lg">{tournaments.length}</span> <span className="text-text-muted">전체 대회</span></span>
             <span><span className="text-green-400 font-bold text-lg">{openCount}</span> <span className="text-text-muted">접수중</span></span>
             <span><span className="text-red-400 font-bold text-lg">{closingSoon.length}</span> <span className="text-text-muted">이번주 마감</span></span>
+          </div>
+          <div className="flex gap-3">
+            <button onClick={handleInviteCode} className="flex items-center gap-2 px-4 py-2 bg-ui-dark border border-brand-cyan/30 rounded-lg text-brand-cyan text-sm font-bold hover:bg-brand-cyan/10 transition-colors">
+              <Key className="w-4 h-4" /> 초대 코드로 참가하기
+            </button>
+            <Link href="/tournaments/manage/create" className="flex items-center gap-2 px-4 py-2 bg-brand-cyan text-dark rounded-lg text-sm font-bold hover:bg-cyan-400 transition-colors">
+              대회 개설하기
+            </Link>
           </div>
         </div>
       </div>
