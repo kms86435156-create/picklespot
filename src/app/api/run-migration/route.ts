@@ -11,22 +11,47 @@ export async function GET() {
   const db = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
   const results: string[] = [];
 
-  const { error } = await db.from("meetup_messages").select("id").limit(1);
-  if (error && error.message.includes("does not exist")) {
-    results.push("meetup_messages 테이블 없음 — Supabase Dashboard SQL Editor에서 실행 필요");
-    return NextResponse.json({ ok: false, tableExists: false, results, sql: `CREATE TABLE IF NOT EXISTS meetup_messages (id TEXT PRIMARY KEY, meetup_id TEXT NOT NULL REFERENCES meetups(id) ON DELETE CASCADE, user_id TEXT NOT NULL, user_name TEXT NOT NULL DEFAULT '', content TEXT NOT NULL DEFAULT '', created_at TIMESTAMPTZ NOT NULL DEFAULT now()); CREATE INDEX IF NOT EXISTS idx_meetup_messages_meetup ON meetup_messages(meetup_id, created_at); ALTER TABLE meetup_messages ENABLE ROW LEVEL SECURITY; CREATE POLICY meetup_msg_read ON meetup_messages FOR SELECT USING (true); CREATE POLICY meetup_msg_write ON meetup_messages FOR ALL USING (true) WITH CHECK (true); ALTER PUBLICATION supabase_realtime ADD TABLE meetup_messages; ALTER PUBLICATION supabase_realtime ADD TABLE meetup_participants;` });
-  }
+  // 1. meetups 테이블 확인
+  const { data: meetups, error: me } = await db.from("meetups").select("id,title").limit(3);
+  results.push(`meetups: ${meetups?.length || 0}개, error: ${me?.message || "none"}`);
 
-  results.push("meetup_messages 테이블 존재 확인됨");
+  // 2. meetup_messages 테이블 확인
+  const { data: msgs, error: mme } = await db.from("meetup_messages").select("id").limit(1);
+  results.push(`meetup_messages: ${msgs !== null ? "접근 가능" : "접근 불가"}, error: ${mme?.message || "none"}`);
 
-  const testId = `mm_test_${Date.now()}`;
-  const { error: ie } = await db.from("meetup_messages").insert({ id: testId, meetup_id: "test", user_id: "test", user_name: "시스템", content: "테스트", created_at: new Date().toISOString() });
-  if (ie) {
-    results.push("INSERT 실패: " + ie.message);
+  // 3. 실제 meetup이 있으면 INSERT 테스트
+  if (meetups && meetups.length > 0) {
+    const testId = `mm_test_${Date.now()}`;
+    const { error: ie } = await db.from("meetup_messages").insert({
+      id: testId, meetup_id: meetups[0].id,
+      user_id: "system", user_name: "시스템", content: "테스트",
+      created_at: new Date().toISOString(),
+    });
+    if (ie) {
+      results.push(`INSERT 실패: ${ie.message}`);
+    } else {
+      await db.from("meetup_messages").delete().eq("id", testId);
+      results.push("INSERT/DELETE 성공!");
+    }
   } else {
-    await db.from("meetup_messages").delete().eq("id", testId);
-    results.push("INSERT/DELETE 테스트 성공");
+    // meetup 없으면 하나 임시 생성해서 테스트
+    const tmpMeetup = { id: "meetup_tmp_test", title: "tmp", status: "open", created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    const { error: mie } = await db.from("meetups").insert(tmpMeetup);
+    if (mie) {
+      results.push(`meetup INSERT 실패: ${mie.message}`);
+    } else {
+      const testId = `mm_test_${Date.now()}`;
+      const { error: ie } = await db.from("meetup_messages").insert({
+        id: testId, meetup_id: "meetup_tmp_test",
+        user_id: "system", user_name: "시스템", content: "테스트",
+        created_at: new Date().toISOString(),
+      });
+      results.push(ie ? `msg INSERT 실패: ${ie.message}` : "msg INSERT 성공!");
+      await db.from("meetup_messages").delete().eq("meetup_id", "meetup_tmp_test");
+      await db.from("meetups").delete().eq("id", "meetup_tmp_test");
+      results.push("정리 완료");
+    }
   }
 
-  return NextResponse.json({ ok: true, tableExists: true, results });
+  return NextResponse.json({ ok: true, results });
 }
