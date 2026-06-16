@@ -13,11 +13,14 @@ interface ChatButtonProps {
 
 export default function ChatButton({ targetUserId, context, label = "메시지 보내기", className }: ChatButtonProps) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, requireLogin } = useAuth();
 
-  if (!user || user.id === targetUserId) return null;
+  // 본인에게는 메시지 보내기 버튼 숨김
+  if (user && user.id === targetUserId) return null;
 
   async function handleClick() {
+    if (!requireLogin(() => handleClick())) return;
+
     const res = await fetch("/api/chat/start", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -26,8 +29,6 @@ export default function ChatButton({ targetUserId, context, label = "메시지 �
     const data = await res.json();
     if (data.conversation) {
       router.push(`/messages/${data.conversation.id}`);
-    } else if (res.status === 401) {
-      router.push("/login?from=/messages");
     }
   }
 

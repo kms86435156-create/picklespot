@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { MapPin, Calendar, Users, Phone, Clock, ArrowLeft, ArrowRight, CreditCard, ExternalLink } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
 import RegistrationFormModal from "./RegistrationFormModal";
@@ -26,16 +25,12 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string;
 export default function TournamentDetailPage({ tournament: t, similarTournaments, matchingVenue, matches }: {
   tournament: any; similarTournaments: any[]; matchingVenue?: any; matches?: any[];
 }) {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { requireLogin } = useAuth();
   const [showRegForm, setShowRegForm] = useState(false);
   const dl = daysUntil(t.registrationDeadline || t.startDate || "");
 
   function handleRegister() {
-    if (!user) {
-      router.push(`/login?from=/tournaments/${t.id}`);
-      return;
-    }
+    if (!requireLogin(() => handleRegister())) return;
     setShowRegForm(true);
   }
   const isOpen = (t.status === "open" || t.status === "draft") && dl > 0;

@@ -1,25 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuth } from "@/components/auth/AuthProvider";
+import { X } from "lucide-react";
 import PasswordInput from "@/components/ui/PasswordInput";
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { refresh } = useAuth();
+interface LoginModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  refresh: () => Promise<void>;
+}
 
+export default function LoginModal({ open, onClose, onSuccess, refresh }: LoginModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function getFrom() {
-    if (typeof window === "undefined") return "/";
-    const params = new URLSearchParams(window.location.search);
-    return params.get("from") || "/";
-  }
+  if (!open) return null;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -38,8 +36,10 @@ export default function LoginPage() {
         return;
       }
       await refresh();
-      router.push(getFrom());
-      router.refresh();
+      setEmail("");
+      setPassword("");
+      setError("");
+      onSuccess();
     } catch {
       setError("서버에 연결할 수 없습니다.");
     } finally {
@@ -47,21 +47,43 @@ export default function LoginPage() {
     }
   }
 
-  const from = getFrom();
+  function handleSignupClick() {
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
+    onClose();
+    window.location.href = `/signup?from=${encodeURIComponent(currentPath)}`;
+  }
+
+  async function handleOAuth(provider: "google" | "kakao") {
+    const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
+    window.location.href = `/api/auth/oauth?provider=${provider}&from=${encodeURIComponent(currentPath)}`;
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-dark px-4 pt-14">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-white">로그인</h1>
-          <p className="text-sm text-text-muted mt-1">PBL.SYS 계정으로 로그인하세요</p>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <div className="relative w-full max-w-sm mx-4 bg-dark border border-ui-border rounded-2xl p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Header */}
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-bold text-white">로그인</h2>
+          <p className="text-sm text-text-muted mt-1">로그인 후 이용할 수 있어요</p>
         </div>
 
         {/* Social Login */}
         <div className="space-y-2 mb-4">
           <button
             type="button"
-            onClick={() => { window.location.href = `/api/auth/oauth?provider=google&from=${encodeURIComponent(from)}`; }}
+            onClick={() => handleOAuth("google")}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-gray-800 font-medium text-sm rounded-lg hover:bg-gray-100 transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -74,7 +96,7 @@ export default function LoginPage() {
           </button>
           <button
             type="button"
-            onClick={() => { window.location.href = `/api/auth/oauth?provider=kakao&from=${encodeURIComponent(from)}`; }}
+            onClick={() => handleOAuth("kakao")}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#FEE500] text-[#191919] font-medium text-sm rounded-lg hover:bg-[#FDD800] transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -91,33 +113,49 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-ui-border" />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Email/Password Form */}
+        <form onSubmit={handleSubmit} className="space-y-3">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">{error}</div>
+            <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-3 py-2 text-xs text-red-400">
+              {error}
+            </div>
           )}
           <div>
-            <label htmlFor="email" className="block text-xs text-text-muted mb-1.5">이메일</label>
-            <input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus autoComplete="email"
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
               className="w-full px-3 py-2.5 bg-surface border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:outline-none focus:border-brand-cyan/50"
-              placeholder="email@example.com" />
+              placeholder="이메일"
+            />
           </div>
           <div>
-            <label htmlFor="password" className="block text-xs text-text-muted mb-1.5">비밀번호</label>
-            <PasswordInput id="password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="current-password"
+            <PasswordInput
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              autoComplete="current-password"
               className="w-full px-3 py-2.5 bg-surface border border-ui-border rounded-lg text-sm text-white placeholder:text-text-muted/50 focus:outline-none focus:border-brand-cyan/50"
-              placeholder="비밀번호 입력" />
+              placeholder="비밀번호"
+            />
           </div>
-          <button type="submit" disabled={loading}
-            className="w-full py-2.5 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 disabled:opacity-50 transition-colors">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2.5 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 disabled:opacity-50 transition-colors"
+          >
             {loading ? "로그인 중..." : "로그인"}
           </button>
         </form>
 
-        <p className="text-center text-sm text-text-muted mt-6">
+        {/* Signup link */}
+        <p className="text-center text-sm text-text-muted mt-4">
           계정이 없으신가요?{" "}
-          <Link href={`/signup${from !== "/" ? `?from=${encodeURIComponent(from)}` : ""}`} className="text-brand-cyan hover:underline font-medium">
+          <button onClick={handleSignupClick} className="text-brand-cyan hover:underline font-medium">
             회원가입
-          </Link>
+          </button>
         </p>
       </div>
     </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Calendar, Clock, Check } from "lucide-react";
 
@@ -11,8 +10,7 @@ interface BookingSlotPickerProps {
 }
 
 export default function BookingSlotPicker({ venueId }: BookingSlotPickerProps) {
-  const router = useRouter();
-  const { user } = useAuth();
+  const { user, requireLogin } = useAuth();
   const [slots, setSlots] = useState<any[]>([]);
   const [resources, setResources] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +73,7 @@ export default function BookingSlotPicker({ venueId }: BookingSlotPickerProps) {
   }, [slots, resources]);
 
   async function handleBook() {
-    if (!user) { router.push(`/login?from=/courts/${venueId}`); return; }
+    if (!requireLogin(() => handleBook())) return;
     if (!selectedSlot) return;
     setBooking(true);
     setError("");

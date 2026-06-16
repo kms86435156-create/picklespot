@@ -39,7 +39,7 @@ export default function MeetupDetailPage() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   const justCreated = searchParams.get("created") === "1";
-  const { user } = useAuth();
+  const { user, requireLogin } = useAuth();
 
   const [meetup, setMeetup] = useState<any>(null);
   const [participants, setParticipants] = useState<any[]>([]);
@@ -67,10 +67,7 @@ export default function MeetupDetailPage() {
   }, [user, participants]);
 
   async function handleApply() {
-    if (!user) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
+    if (!requireLogin(() => handleApply())) return;
     setApplying(true);
     setApplyResult(null);
     try {
@@ -81,7 +78,7 @@ export default function MeetupDetailPage() {
         setAlreadyApplied(true);
         // 참여자 목록 갱신
         setMeetup((prev: any) => prev ? { ...prev, currentPlayers: (prev.currentPlayers || 0) + 1 } : prev);
-        setParticipants(prev => [...prev, { userId: user.id, userName: user.name, status: "confirmed" }]);
+        setParticipants(prev => [...prev, { userId: user!.id, userName: user!.name, status: "confirmed" }]);
         logger.event("MEETUP_APPLIED", { meetupId: id, action: "apply" });
       } else {
         if (data.error?.includes("이미 신청")) setAlreadyApplied(true);

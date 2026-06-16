@@ -24,7 +24,7 @@ function timeAgo(d: string) {
 }
 
 export default function CommunityPage() {
-  const { user } = useAuth();
+  const { user, requireLogin } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState("전체");
@@ -67,6 +67,7 @@ export default function CommunityPage() {
   }
 
   async function handleLike(postId: string) {
+    if (!requireLogin(() => handleLike(postId))) return;
     await fetch("/api/community", {
       method: "PATCH", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId, action: "like" }),
@@ -107,12 +108,13 @@ export default function CommunityPage() {
               <p className="text-sm text-text-muted">피클볼러들의 이야기</p>
             </div>
           </div>
-          {user && (
-            <button onClick={() => setShowWrite(!showWrite)}
-              className="px-4 py-2 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 transition-colors">
-              글쓰기
-            </button>
-          )}
+          <button onClick={() => {
+              if (!requireLogin(() => setShowWrite(true))) return;
+              setShowWrite(!showWrite);
+            }}
+            className="px-4 py-2 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 transition-colors">
+            글쓰기
+          </button>
         </div>
 
         {showWrite && (
