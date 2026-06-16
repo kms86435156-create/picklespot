@@ -17,7 +17,7 @@ export default function TournamentDashboard({ initialTournament, initialRegistra
     if (!confirm(status === "closed" ? "모집을 마감하시겠습니까?" : "상태를 변경하시겠습니까?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/_api/tournaments/${tournament.id}/status`, {
+      const res = await fetch(`/api/tournaments/${tournament.id}/status`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -34,7 +34,7 @@ export default function TournamentDashboard({ initialTournament, initialRegistra
   const handleApprove = async (regId: string, status: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/_api/tournaments/${tournament.id}/registrations/${regId}`, {
+      const res = await fetch(`/api/tournaments/${tournament.id}/registrations/${regId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status })
@@ -52,7 +52,7 @@ export default function TournamentDashboard({ initialTournament, initialRegistra
     if (!confirm("대진표를 생성하시겠습니까? (이 작업은 되돌릴 수 없습니다)")) return;
     setLoading(true);
     try {
-      const res = await fetch(`/_api/tournaments/${tournament.id}/bracket`, { method: "POST" });
+      const res = await fetch(`/api/tournaments/${tournament.id}/bracket`, { method: "POST" });
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to generate bracket");
@@ -70,7 +70,7 @@ export default function TournamentDashboard({ initialTournament, initialRegistra
   const handleMatchWinner = async (matchId: string, winnerId: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`/_api/tournaments/${tournament.id}/matches/${matchId}/winner`, {
+      const res = await fetch(`/api/tournaments/${tournament.id}/matches/${matchId}/winner`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ winnerId })

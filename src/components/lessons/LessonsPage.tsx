@@ -212,7 +212,7 @@ function RegisterModal({ onClose, onSubmit }: { onClose: () => void; onSubmit: (
     }
     setSubmitting(true);
     try {
-      const res = await fetch("/_api/lessons", {
+      const res = await fetch("/api/lessons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
