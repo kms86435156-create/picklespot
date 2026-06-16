@@ -41,24 +41,9 @@ export default function OnboardingPage() {
 
   const [region, setRegion] = useState("");
   const [skillLevel, setSkillLevel] = useState("");
-  const [preferredTimes, setPreferredTimes] = useState<string[]>([]);
+  const [preferredTimes, setPreferredTimes] = useState<string[]>(["weekday_afternoon"]);
   const [playStyle, setPlayStyle] = useState("");
   const [recommendedMeetup, setRecommendedMeetup] = useState<any>(null);
-  const [initialized, setInitialized] = useState(false);
-
-  // 기존 프로필 데이터가 있으면 초기값으로 로드 (부분 저장된 경우 대비)
-  useEffect(() => {
-    if (!loading && user && !initialized) {
-      if (user.region) setRegion(user.region);
-      if (user.skillLevel) setSkillLevel(user.skillLevel);
-      if (user.preferredTimes) {
-        const times = user.preferredTimes.split(",").filter(Boolean);
-        setPreferredTimes(times);
-      }
-      if (user.playStyle) setPlayStyle(user.playStyle);
-      setInitialized(true);
-    }
-  }, [user, loading, initialized]);
 
   useEffect(() => {
     if (step === 5 && !recommendedMeetup) {
