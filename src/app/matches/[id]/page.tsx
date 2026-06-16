@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Zap, MapPin, Calendar, Users, Clock, ChevronLeft,
-  CheckCircle, AlertCircle, User, Share2, Info
+  CheckCircle, AlertCircle, User, Share2, Info, MessageCircle
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { logger } from "@/lib/logger";
@@ -413,18 +413,25 @@ export default function MeetupDetailPage() {
       {/* 신청 버튼 — 모바일: fixed bottom, 데스크탑: 인라인 */}
       <div className="fixed bottom-20 left-0 right-0 px-4 py-3 bg-dark/90 backdrop-blur-sm border-t border-ui-border lg:static lg:bg-transparent lg:border-0 lg:p-0 lg:backdrop-blur-none z-40">
         {alreadyApplied || applyResult?.success ? (
-          <div className="flex gap-2 w-full">
-            <div className="flex-1 flex items-center justify-center gap-2 py-4 bg-emerald-400/10 border border-emerald-400/30 rounded-2xl text-emerald-400 font-black text-base">
-              <CheckCircle className="w-5 h-5" />
-              참여 확정! 같이 즐겁게 치세요 🎾
-            </div>
-            <button
-              onClick={handleCancelApply}
-              disabled={applying}
-              className="px-4 py-4 bg-red-500/10 border border-red-500/20 text-red-400 font-bold rounded-2xl hover:bg-red-500/20 transition-all disabled:opacity-50"
+          <div className="space-y-2 w-full">
+            <Link href={`/matches/${id}/chat`}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-brand-cyan text-dark font-black rounded-2xl text-base hover:bg-brand-cyan/90 active:scale-95 transition-all shadow-lg shadow-brand-cyan/20">
+              <MessageCircle className="w-5 h-5" />
+              참여자 채팅방 열기
+            </Link>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-400/10 border border-emerald-400/30 rounded-2xl text-emerald-400 font-bold text-sm">
+                <CheckCircle className="w-4 h-4" />
+                참여 확정됨
+              </div>
+              <button
+                onClick={handleCancelApply}
+                disabled={applying}
+                className="px-4 py-3 bg-red-500/10 border border-red-500/20 text-red-400 font-bold rounded-2xl hover:bg-red-500/20 transition-all disabled:opacity-50"
             >
               취소
             </button>
+            </div>
           </div>
         ) : isOpen ? (
           <button
