@@ -13,11 +13,25 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
+  /* 모바일 웹뷰(WebView) 최적화: 당겨서 새로고침(바운스) 방지 */
+  overscroll-behavior-y: none;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+  /* 모바일 웹뷰(WebView) 최적화: 네이티브 앱 같은 터치/선택 방지 */
+  -webkit-touch-callout: none; /* iOS 꾹 누르기 메뉴 방지 */
+  -webkit-user-select: none; /* 텍스트 선택 방지 */
+  user-select: none;
+  -webkit-tap-highlight-color: transparent; /* 터치 시 파란색 깜빡임 방지 */
+}
+
+/* 입력 필드는 텍스트 선택 허용 */
+input, textarea {
+  -webkit-user-select: auto;
+  user-select: auto;
 }
 
 @layer utilities {
