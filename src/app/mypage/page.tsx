@@ -7,6 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import {
   MapPin, Target, Clock, Users, Trophy, Zap, Heart, Bell,
   Edit3, Save, X, LogOut, ChevronRight, Bookmark, Shield, Calendar, MessageCircle, Ticket,
+  AlertTriangle, Trash2,
 } from "lucide-react";
 
 const REGIONS = [
@@ -42,6 +43,8 @@ export default function MyPage() {
   const [clubsLoading, setClubsLoading] = useState(false);
   const [myTournaments, setMyTournaments] = useState<any[]>([]);
   const [tournamentsLoading, setTournamentsLoading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -506,11 +509,64 @@ export default function MyPage() {
           </div>
         )}
 
-        {/* ═══ 로그아웃 ═══ */}
-        <button onClick={handleLogout}
-          className="w-full flex items-center justify-center gap-2 py-3 text-sm text-text-muted hover:text-red-400 border border-ui-border rounded-lg hover:border-red-400/30 transition-colors">
-          <LogOut className="w-4 h-4" /> 로그아웃
-        </button>
+        {/* ═══ 로그아웃 / 탈퇴 ═══ */}
+        <div className="space-y-3">
+          <button onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3 text-sm text-text-muted hover:text-red-400 border border-ui-border rounded-lg hover:border-red-400/30 transition-colors">
+            <LogOut className="w-4 h-4" /> 로그아웃
+          </button>
+          <button onClick={() => setShowDeleteModal(true)}
+            className="w-full flex items-center justify-center gap-2 py-3 text-xs text-text-muted/50 hover:text-red-400 transition-colors">
+            <Trash2 className="w-3.5 h-3.5" /> 회원 탈퇴
+          </button>
+        </div>
+
+        {/* ═══ 탈퇴 확인 모달 ═══ */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="bg-surface border border-red-500/30 rounded-xl p-6 max-w-sm w-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-500/10 rounded-full flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-400" />
+                </div>
+                <h3 className="text-lg font-bold text-white">회원 탈퇴</h3>
+              </div>
+              <div className="text-sm text-text-muted space-y-2 mb-6">
+                <p>탈퇴하면 <span className="text-red-400 font-medium">되돌릴 수 없습니다.</span></p>
+                <ul className="text-xs space-y-1 list-disc list-inside text-text-muted/70">
+                  <li>계정 및 프로필 정보가 영구 삭제됩니다</li>
+                  <li>작성한 게시글 · 리뷰는 &quot;탈퇴한 회원&quot;으로 표시됩니다</li>
+                  <li>번개 참가 기록, 메시지, 알림이 삭제됩니다</li>
+                </ul>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setShowDeleteModal(false)} disabled={deleting}
+                  className="flex-1 py-2.5 text-sm text-text-muted border border-ui-border rounded-lg hover:text-white transition-colors">
+                  취소
+                </button>
+                <button
+                  onClick={async () => {
+                    setDeleting(true);
+                    try {
+                      const res = await fetch("/api/auth/delete-account", { method: "DELETE" });
+                      const ct = res.headers.get("content-type") || "";
+                      if (!ct.includes("application/json")) throw new Error(`서버 오류 (${res.status})`);
+                      const data = await res.json();
+                      if (!res.ok) throw new Error(data.error);
+                      window.location.href = "/";
+                    } catch (err: any) {
+                      alert(err.message || "탈퇴 처리 중 오류가 발생했습니다.");
+                      setDeleting(false);
+                    }
+                  }}
+                  disabled={deleting}
+                  className="flex-1 py-2.5 text-sm font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50 transition-colors">
+                  {deleting ? "처리 중..." : "탈퇴하기"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
