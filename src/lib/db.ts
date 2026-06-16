@@ -234,6 +234,7 @@ const TABLE_MAP: Record<string, string> = {
   "venue-reviews.json": "venue_reviews",
   "manner-ratings.json": "manner_ratings",
   "tournament-matches.json": "tournament_matches",
+  "feedbacks.json": "feedbacks",
 };
 
 export function createEntity(file: string, entity: any) {
@@ -575,7 +576,7 @@ export async function getMeetup(id: string) {
 
 export async function getMeetupParticipants(meetupId: string) {
   if (isSupabaseEnabled) {
-    const { data } = await db!.from("meetup_participants").select("*").eq("meetup_id", meetupId).order("created_at");
+    const { data } = await db!.from("meetup_participants").select("*").eq("meetup_id", meetupId).order("joined_at");
     return (data || []).map(toCamel);
   }
   return readJSON("meetup-participants.json").filter((p: any) => p.meetupId === meetupId);
