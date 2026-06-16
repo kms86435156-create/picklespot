@@ -27,10 +27,13 @@ export interface User {
   updatedAt: string;
 }
 
+const TIMESTAMP_COLS = new Set(["suspended_at", "created_at", "updated_at"]);
+
 function toSnake(obj: any): any {
   const result: any = {};
   for (const [k, v] of Object.entries(obj)) {
-    result[k.replace(/[A-Z]/g, m => "_" + m.toLowerCase())] = v;
+    const snakeKey = k.replace(/[A-Z]/g, m => "_" + m.toLowerCase());
+    result[snakeKey] = TIMESTAMP_COLS.has(snakeKey) && v === "" ? null : v;
   }
   return result;
 }
