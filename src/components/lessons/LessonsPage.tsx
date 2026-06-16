@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, User, Users, Phone, MessageCircle, Plus, X, Search } from "lucide-react";
+import { MapPin, User, Users, Phone, MessageCircle, Plus, X, Search, Copy, Check, ExternalLink } from "lucide-react";
 
 const REGIONS = ["전체", "서울", "경기", "인천", "부산", "대구", "대전", "광주", "울산", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
 const TYPES = ["전체", "개인", "그룹"];
@@ -137,55 +137,168 @@ export default function LessonsPage({ lessons: initialLessons }: { lessons: any[
 }
 
 function LessonCard({ lesson: l }: { lesson: any }) {
+  const [showContact, setShowContact] = useState(false);
   const isKakao = l.contact?.includes("카카오") || l.contact?.includes("kakao");
   const ContactIcon = isKakao ? MessageCircle : Phone;
 
-  function handleContact() {
-    if (l.contact?.startsWith("010") || l.contact?.startsWith("02-")) {
-      window.location.href = `tel:${l.contact.replace(/[^0-9]/g, "")}`;
-    } else {
-      navigator.clipboard?.writeText(l.contact || "");
-      alert(`연락처가 복사되었습니다: ${l.contact}`);
-    }
+  return (
+    <>
+      <div className="bg-surface border border-ui-border rounded-lg p-5 hover:border-brand-cyan/30 transition-all">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 bg-brand-cyan/10 border border-brand-cyan/20 rounded-full flex items-center justify-center shrink-0">
+              <span className="text-brand-cyan font-bold text-base">{l.coachName?.[0]}</span>
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-white text-base">{l.coachName}</h3>
+              <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5 flex-wrap">
+                <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{l.region}</span>
+                <span className="flex items-center gap-1">
+                  {l.lessonType === "개인" ? <User className="w-3 h-3" /> : <Users className="w-3 h-3" />}
+                  {l.lessonType}레슨
+                </span>
+              </div>
+            </div>
+          </div>
+          <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded font-medium ${l.lessonType === "개인" ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20"}`}>
+            {l.lessonType}
+          </span>
+        </div>
+
+        <p className="text-sm text-text-muted mt-3 leading-relaxed">{l.intro}</p>
+
+        <div className="mt-4 pt-3 border-t border-ui-border flex items-center justify-between flex-wrap gap-2">
+          <span className="text-brand-cyan font-bold text-sm">{l.price}</span>
+          <button
+            onClick={() => setShowContact(true)}
+            className="flex items-center gap-1.5 px-4 py-2 bg-brand-cyan text-dark font-bold text-xs rounded-lg hover:bg-brand-cyan/90 transition-colors"
+          >
+            <ContactIcon className="w-3.5 h-3.5" /> 문의하기
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showContact && (
+          <ContactModal lesson={l} onClose={() => setShowContact(false)} />
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
+function parseContact(contact: string) {
+  const urlMatch = contact.match(/https?:\/\/open\.kakao\.com\/[^\s,|]+/);
+  const phoneMatch = contact.match(/(01[016789]-?\d{3,4}-?\d{4})/);
+  const kakaoIdMatch = contact.match(/카카오톡:\s*([^\s,|]+)/i) || contact.match(/kakao(?:talk)?:\s*([^\s,|]+)/i);
+  return {
+    kakaoLink: urlMatch?.[0] || null,
+    phone: phoneMatch?.[1] || null,
+    kakaoId: kakaoIdMatch?.[1] || null,
+  };
+}
+
+function ContactModal({ lesson: l, onClose }: { lesson: any; onClose: () => void }) {
+  const [copied, setCopied] = useState(false);
+  const parsed = parseContact(l.contact || "");
+  const isKakao = !!(parsed.kakaoLink || parsed.kakaoId);
+  const isPhone = !!parsed.phone;
+
+  function handleCopy(text: string) {
+    navigator.clipboard?.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
-    <div className="bg-surface border border-ui-border rounded-lg p-5 hover:border-brand-cyan/30 transition-all">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Avatar */}
-          <div className="w-11 h-11 bg-brand-cyan/10 border border-brand-cyan/20 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-brand-cyan font-bold text-base">{l.coachName?.[0]}</span>
-          </div>
-          <div className="min-w-0">
-            <h3 className="font-bold text-white text-base">{l.coachName}</h3>
-            <div className="flex items-center gap-2 text-xs text-text-muted mt-0.5 flex-wrap">
-              <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{l.region}</span>
-              <span className="flex items-center gap-1">
-                {l.lessonType === "개인" ? <User className="w-3 h-3" /> : <Users className="w-3 h-3" />}
-                {l.lessonType}레슨
-              </span>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+    >
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ y: 60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 60, opacity: 0 }}
+        className="relative w-full max-w-sm bg-surface border border-ui-border rounded-t-2xl sm:rounded-2xl overflow-hidden"
+      >
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-ui-border flex items-center justify-between">
+          <h2 className="text-base font-bold text-white">코치 문의하기</h2>
+          <button onClick={onClose} className="p-1.5 text-text-muted hover:text-white transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Coach Info */}
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-brand-cyan/10 border border-brand-cyan/20 rounded-full flex items-center justify-center shrink-0">
+              <span className="text-brand-cyan font-bold text-lg">{l.coachName?.[0]}</span>
+            </div>
+            <div>
+              <h3 className="font-bold text-white">{l.coachName}</h3>
+              <p className="text-xs text-text-muted">{l.region} · {l.lessonType}레슨 · {l.price}</p>
             </div>
           </div>
+
+          {/* Contact Info */}
+          <div className="bg-dark/50 border border-ui-border rounded-lg p-4 space-y-3">
+            <p className="text-xs text-text-muted font-medium">연락처</p>
+            <div className="flex items-center gap-2">
+              {isKakao ? (
+                <MessageCircle className="w-4 h-4 text-yellow-400 shrink-0" />
+              ) : (
+                <Phone className="w-4 h-4 text-brand-cyan shrink-0" />
+              )}
+              <span className="text-sm text-white break-all">{l.contact}</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="space-y-2">
+            {/* Primary: Kakao open chat link */}
+            {parsed.kakaoLink && (
+              <a
+                href={parsed.kakaoLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-[#FEE500] text-[#191919] font-bold text-sm rounded-lg hover:bg-[#FEE500]/90 transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                카카오톡으로 문의
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            )}
+
+            {/* Primary: Phone call */}
+            {isPhone && (
+              <a
+                href={`tel:${parsed.phone!.replace(/[^0-9]/g, "")}`}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-brand-cyan text-dark font-bold text-sm rounded-lg hover:bg-brand-cyan/90 transition-colors"
+              >
+                <Phone className="w-4 h-4" />
+                전화 문의
+              </a>
+            )}
+
+            {/* Secondary: Copy */}
+            <button
+              onClick={() => handleCopy(parsed.kakaoId || parsed.phone || l.contact || "")}
+              className="w-full flex items-center justify-center gap-2 py-2.5 bg-transparent border border-ui-border text-text-muted font-medium text-sm rounded-lg hover:border-brand-cyan/50 hover:text-white transition-colors"
+            >
+              {copied ? (
+                <><Check className="w-4 h-4 text-green-400" /><span className="text-green-400">복사 완료!</span></>
+              ) : (
+                <><Copy className="w-4 h-4" />{parsed.kakaoId ? `카카오톡 ID 복사 (${parsed.kakaoId})` : "연락처 복사"}</>
+              )}
+            </button>
+          </div>
         </div>
-        {/* Type badge */}
-        <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded font-medium ${l.lessonType === "개인" ? "bg-purple-500/10 text-purple-400 border border-purple-500/20" : "bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20"}`}>
-          {l.lessonType}
-        </span>
-      </div>
-
-      <p className="text-sm text-text-muted mt-3 leading-relaxed">{l.intro}</p>
-
-      <div className="mt-4 pt-3 border-t border-ui-border flex items-center justify-between flex-wrap gap-2">
-        <span className="text-brand-cyan font-bold text-sm">{l.price}</span>
-        <button
-          onClick={handleContact}
-          className="flex items-center gap-1.5 px-4 py-2 bg-brand-cyan text-dark font-bold text-xs rounded-lg hover:bg-brand-cyan/90 transition-colors"
-        >
-          <ContactIcon className="w-3.5 h-3.5" /> 문의하기
-        </button>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
 
