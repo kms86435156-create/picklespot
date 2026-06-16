@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { logger } from "@/lib/logger";
+import { getSupabaseBrowser } from "@/lib/supabase-browser";
 
 const SKILL_COLORS: Record<string, string> = {
   "처음이에요": "bg-emerald-400/15 text-emerald-400 border-emerald-400/20",
@@ -48,6 +49,7 @@ export default function MeetupDetailPage() {
   const [applyResult, setApplyResult] = useState<{ success?: boolean; error?: string } | null>(null);
   const [alreadyApplied, setAlreadyApplied] = useState(false);
   const [showSuccess, setShowSuccess] = useState(justCreated);
+  const [realtimeToast, setRealtimeToast] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/meetups/${id}`)
@@ -59,6 +61,44 @@ export default function MeetupDetailPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
+
+  // Supabase Realtime: 참가자 변경 구독
+  useEffect(() => {
+    const sb = getSupabaseBrowser();
+    if (!sb) return;
+
+    const channel = sb.channel(`meetup-${id}`)
+      .on(
+        "postgres_changes" as any,
+        { event: "INSERT", schema: "public", table: "meetup_participants", filter: `meetup_id=eq.${id}` },
+        (payload: any) => {
+          const row = payload.new;
+          // 중복 방지
+          setParticipants(prev => {
+            if (prev.some(p => p.id === row.id || p.userId === row.user_id)) return prev;
+            return [...prev, { id: row.id, userId: row.user_id, userName: row.user_name, status: row.status }];
+          });
+          setMeetup((prev: any) => prev ? { ...prev, currentPlayers: (prev.currentPlayers || 0) + 1 } : prev);
+          // 본인이 아닌 경우 토스트 표시
+          if (user && row.user_id !== user.id) {
+            setRealtimeToast(`${row.user_name || "누군가"}님이 참여했어요! ⚡`);
+            setTimeout(() => setRealtimeToast(null), 4000);
+          }
+        }
+      )
+      .on(
+        "postgres_changes" as any,
+        { event: "DELETE", schema: "public", table: "meetup_participants", filter: `meetup_id=eq.${id}` },
+        (payload: any) => {
+          const row = payload.old;
+          setParticipants(prev => prev.filter(p => p.id !== row.id));
+          setMeetup((prev: any) => prev ? { ...prev, currentPlayers: Math.max(0, (prev.currentPlayers || 1) - 1) } : prev);
+        }
+      )
+      .subscribe();
+
+    return () => { sb.removeChannel(channel); };
+  }, [id, user]);
 
   useEffect(() => {
     if (user && participants.length > 0) {
@@ -192,6 +232,21 @@ export default function MeetupDetailPage() {
           >
             <CheckCircle className="w-5 h-5 text-brand-cyan shrink-0" />
             <span className="text-sm font-bold text-white">참여 확정! ⚡ 같이 즐겁게 치세요!</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 실시간 참여 알림 토스트 */}
+      <AnimatePresence>
+        {realtimeToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3 bg-emerald-400/20 border border-emerald-400/30 rounded-2xl shadow-xl backdrop-blur-sm"
+          >
+            <Users className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-sm font-bold text-white">{realtimeToast}</span>
           </motion.div>
         )}
       </AnimatePresence>
