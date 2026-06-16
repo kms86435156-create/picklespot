@@ -82,11 +82,12 @@ export function toCamel(obj: any): any {
 // ═══════════════════════════════
 // Tournaments
 // ═══════════════════════════════
-export async function getTournaments(filters?: { region?: string; status?: string; keyword?: string }) {
+export async function getTournaments(filters?: { region?: string; status?: string; keyword?: string; visibility?: string }) {
   if (isSupabaseEnabled) {
     let q = db!.from("tournaments").select("*").eq("is_verified", true);
     if (filters?.region) q = q.eq("region", filters.region);
     if (filters?.status) q = q.eq("status", filters.status);
+    if (filters?.visibility) q = q.eq("visibility", filters.visibility);
     if (filters?.keyword) q = q.ilike("title", `%${filters.keyword}%`);
     const { data } = await q.order("start_date", { ascending: true });
     return (data || []).map(toCamel);
@@ -94,6 +95,7 @@ export async function getTournaments(filters?: { region?: string; status?: strin
   let t = readJSON("tournaments.json");
   if (filters?.region) t = t.filter((x: any) => x.region === filters.region);
   if (filters?.status) t = t.filter((x: any) => x.status === filters.status);
+  if (filters?.visibility) t = t.filter((x: any) => x.visibility === filters.visibility);
   if (filters?.keyword) t = t.filter((x: any) => x.title?.includes(filters.keyword));
   return t;
 }
@@ -104,6 +106,56 @@ export async function getTournament(id: string) {
     return data ? toCamel(data) : null;
   }
   return readJSON("tournaments.json").find((t: any) => t.id === id) || null;
+}
+
+export async function createTournament(tournament: any) {
+  const id = `tournament_${Date.now()}`;
+  const now = new Date().toISOString();
+  // DB에 없는 필드 제거
+  const entity = { id, title: tournament.title, description: tournament.description || "", location: tournament.location || "", startDate: tournament.startDate || null, fee: tournament.fee || 0, maxParticipants: tournament.maxParticipants || 0, status: "open", createdAt: now, updatedAt: now };
+  if (isSupabaseEnabled) {
+    const { data, error } = await db!.from("tournaments").insert(toSnake(entity)).select().single();
+    if (error) throw new Error(error.message);
+    return toCamel(data);
+  }
+  const list = readJSON("tournaments.json");
+  list.push(entity);
+  writeJSON("tournaments.json", list);
+  return entity;
+}
+
+export async function updateTournament(id: string, updates: any) {
+  return updateEntity("tournaments.json", id, updates);
+}
+
+export async function getTournamentMatches(tournamentId: string) {
+  if (isSupabaseEnabled) {
+    const { data } = await db!.from("tournament_matches").select("*").eq("tournament_id", tournamentId).order("round").order("match_index");
+    return (data || []).map(toCamel);
+  }
+  return readJSON("tournament-matches.json")
+    .filter((m: any) => m.tournamentId === tournamentId)
+    .sort((a: any, b: any) => {
+      if (a.round !== b.round) return a.round - b.round;
+      return a.matchIndex - b.matchIndex;
+    });
+}
+
+export async function createTournamentMatches(matches: any[]) {
+  if (isSupabaseEnabled) {
+    const snaked = matches.map(toSnake);
+    const { error } = await db!.from("tournament_matches").insert(snaked);
+    if (error) throw new Error(error.message);
+    return matches;
+  }
+  const list = readJSON("tournament-matches.json");
+  list.push(...matches);
+  writeJSON("tournament-matches.json", list);
+  return matches;
+}
+
+export async function updateTournamentMatch(id: string, updates: any) {
+  return updateEntity("tournament-matches.json", id, updates);
 }
 
 // ═══════════════════════════════
@@ -181,6 +233,7 @@ const TABLE_MAP: Record<string, string> = {
   "community-posts.json": "community_posts",
   "venue-reviews.json": "venue_reviews",
   "manner-ratings.json": "manner_ratings",
+  "tournament-matches.json": "tournament_matches",
 };
 
 export function createEntity(file: string, entity: any) {
