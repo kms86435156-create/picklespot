@@ -5,15 +5,26 @@ import { supabaseAdmin, isSupabaseEnabled } from "./supabase";
 const FILE = "feedbacks.json";
 const TABLE = "feedbacks";
 
+// feedbacks 테이블이 Supabase에 없을 수 있으므로 런타임 체크
+let _tableOk: boolean | null = null;
+async function canUseSupabase(): Promise<boolean> {
+  if (!isSupabaseEnabled || !supabaseAdmin) return false;
+  if (_tableOk !== null) return _tableOk;
+  const { error } = await supabaseAdmin.from(TABLE).select("id").limit(1);
+  _tableOk = !error || error.code !== "PGRST205";
+  if (!_tableOk) console.warn("[feedbacks] 테이블 미존재 → JSON fallback");
+  return _tableOk;
+}
+
 export interface Feedback {
   id: string;
   userId: string | null;
   userName: string;
   userEmail: string;
-  category: string; // "bug" | "feature" | "complaint" | "general"
+  category: string;
   title: string;
   message: string;
-  status: string; // "pending" | "in_progress" | "resolved" | "dismissed"
+  status: string;
   adminNote: string;
   resolvedAt: string | null;
   createdAt: string;
@@ -34,7 +45,6 @@ export const STATUSES = [
   { value: "dismissed", label: "반려" },
 ] as const;
 
-// ═══ 피드백 등록 (유저용) ═══
 export async function createFeedback(input: {
   userId?: string | null;
   userName: string;
@@ -59,19 +69,17 @@ export async function createFeedback(input: {
     updatedAt: now,
   };
 
-  if (isSupabaseEnabled && supabaseAdmin) {
-    const { error } = await supabaseAdmin.from(TABLE).insert(toSnake(feedback));
+  if (await canUseSupabase()) {
+    const { error } = await supabaseAdmin!.from(TABLE).insert(toSnake(feedback));
     if (error) throw new Error(error.message);
   } else {
     const list = readJSON(FILE);
     list.push(feedback);
     writeJSON(FILE, list);
   }
-
   return feedback;
 }
 
-// ═══ 관리자: 피드백 목록 ═══
 export interface FeedbackListFilters {
   category?: string;
   status?: string;
@@ -89,8 +97,8 @@ export async function listFeedbacks(filters: FeedbackListFilters = {}): Promise<
   const page = filters.page || 1;
   const limit = filters.limit || 20;
 
-  if (isSupabaseEnabled && supabaseAdmin) {
-    let q = supabaseAdmin.from(TABLE).select("*", { count: "exact" });
+  if (await canUseSupabase()) {
+    let q = supabaseAdmin!.from(TABLE).select("*", { count: "exact" });
     if (filters.category) q = q.eq("category", filters.category);
     if (filters.status) q = q.eq("status", filters.status);
     if (filters.keyword) {
@@ -123,26 +131,22 @@ export async function listFeedbacks(filters: FeedbackListFilters = {}): Promise<
   return { items, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 }
 
-// ═══ 관리자: 피드백 상세 ═══
 export async function getFeedback(id: string): Promise<Feedback | null> {
-  if (isSupabaseEnabled && supabaseAdmin) {
-    const { data } = await supabaseAdmin.from(TABLE).select("*").eq("id", id).single();
+  if (await canUseSupabase()) {
+    const { data } = await supabaseAdmin!.from(TABLE).select("*").eq("id", id).single();
     return data ? toCamel(data) as Feedback : null;
   }
   return readJSON(FILE).find((f: any) => f.id === id) || null;
 }
 
-// ═══ 관리자: 피드백 상태 변경 ═══
 export async function updateFeedback(id: string, updates: Partial<Pick<Feedback, "status" | "adminNote">>): Promise<Feedback | null> {
   const now = new Date().toISOString();
   const safeUpdates: any = { ...updates, updatedAt: now };
-  if (updates.status === "resolved") {
-    safeUpdates.resolvedAt = now;
-  }
+  if (updates.status === "resolved") safeUpdates.resolvedAt = now;
 
-  if (isSupabaseEnabled && supabaseAdmin) {
+  if (await canUseSupabase()) {
     const snaked = toSnake(safeUpdates);
-    const { data, error } = await supabaseAdmin.from(TABLE).update(snaked).eq("id", id).select().single();
+    const { data, error } = await supabaseAdmin!.from(TABLE).update(snaked).eq("id", id).select().single();
     if (error) throw new Error(error.message);
     return data ? toCamel(data) as Feedback : null;
   }
@@ -155,13 +159,12 @@ export async function updateFeedback(id: string, updates: Partial<Pick<Feedback,
   return list[idx];
 }
 
-// ═══ 통계 ═══
 export async function getFeedbackCounts(): Promise<{ total: number; pending: number; inProgress: number; resolved: number }> {
-  if (isSupabaseEnabled && supabaseAdmin) {
-    const { count: total } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true });
-    const { count: pending } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "pending");
-    const { count: inProgress } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "in_progress");
-    const { count: resolved } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "resolved");
+  if (await canUseSupabase()) {
+    const { count: total } = await supabaseAdmin!.from(TABLE).select("id", { count: "exact", head: true });
+    const { count: pending } = await supabaseAdmin!.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "pending");
+    const { count: inProgress } = await supabaseAdmin!.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "in_progress");
+    const { count: resolved } = await supabaseAdmin!.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "resolved");
     return { total: total || 0, pending: pending || 0, inProgress: inProgress || 0, resolved: resolved || 0 };
   }
   const list: Feedback[] = readJSON(FILE);

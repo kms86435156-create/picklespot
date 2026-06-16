@@ -219,7 +219,11 @@ export async function activateUser(id: string): Promise<User | null> {
 export async function getUserCount(): Promise<{ total: number; active: number; suspended: number }> {
   if (isSupabaseEnabled && supabaseAdmin) {
     const { count: total } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true });
-    const { count: suspended } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "suspended");
+    // status 컬럼이 없을 수 있으므로 에러 무시
+    const { count: suspended } = await supabaseAdmin.from(TABLE).select("id", { count: "exact", head: true }).eq("status", "suspended").then(
+      r => r,
+      () => ({ count: 0, data: null, error: null, status: 200, statusText: "" })
+    );
     const t = total || 0;
     const s = suspended || 0;
     return { total: t, active: t - s, suspended: s };
