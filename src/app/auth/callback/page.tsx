@@ -53,9 +53,16 @@ export default function AuthCallbackPage() {
           return;
         }
 
+        const result = await res.json();
         await refresh();
-        const from = searchParams.get("from") || "/";
-        router.replace(from);
+
+        // 신규 사용자(온보딩 미완료)는 온보딩으로, 기존 사용자는 원래 페이지로
+        if (result.user && !result.user.onboardingCompleted) {
+          router.replace("/onboarding");
+        } else {
+          const from = searchParams.get("from") || "/";
+          router.replace(from);
+        }
       } catch {
         setError("서버에 연결할 수 없습니다.");
       }
