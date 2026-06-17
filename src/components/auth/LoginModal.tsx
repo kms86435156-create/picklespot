@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { startOAuth } from "@/lib/oauth";
 
 interface LoginModalProps {
   open: boolean;
@@ -53,9 +54,9 @@ export default function LoginModal({ open, onClose, onSuccess, refresh }: LoginM
     window.location.href = `/signup?from=${encodeURIComponent(currentPath)}`;
   }
 
-  async function handleOAuth(provider: "google" | "kakao") {
+  function handleOAuth(provider: "google" | "kakao") {
     const currentPath = typeof window !== "undefined" ? window.location.pathname : "/";
-    window.location.href = `/api/auth/oauth?provider=${provider}&from=${encodeURIComponent(currentPath)}`;
+    startOAuth(provider, currentPath);
   }
 
   return (

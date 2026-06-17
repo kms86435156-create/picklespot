@@ -19,10 +19,22 @@ export default function AuthCallbackPage() {
         return;
       }
 
-      // Supabase가 URL hash에서 세션을 자동 복원
+      // PKCE flow: URL에 ?code= 파라미터가 있으면 세션으로 교환
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+        if (exchangeError) {
+          console.error("[OAuth callback] code exchange error:", exchangeError);
+          setError("인증 코드 교환에 실패했습니다. 다시 시도해주세요.");
+          return;
+        }
+      }
+
+      // 세션 확인 (PKCE 교환 후 또는 implicit flow의 hash 자동 감지)
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
       if (sessionError || !session?.user) {
+        console.error("[OAuth callback] session error:", sessionError);
         setError("로그인에 실패했습니다. 다시 시도해주세요.");
         return;
       }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { startOAuth } from "@/lib/oauth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function LoginPage() {
         <div className="space-y-2 mb-4">
           <button
             type="button"
-            onClick={() => { window.location.href = `/api/auth/oauth?provider=google&from=${encodeURIComponent(from)}`; }}
+            onClick={() => startOAuth("google", from)}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-white text-gray-800 font-medium text-sm rounded-lg hover:bg-gray-100 transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -74,7 +75,7 @@ export default function LoginPage() {
           </button>
           <button
             type="button"
-            onClick={() => { window.location.href = `/api/auth/oauth?provider=kakao&from=${encodeURIComponent(from)}`; }}
+            onClick={() => startOAuth("kakao", from)}
             className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#FEE500] text-[#191919] font-medium text-sm rounded-lg hover:bg-[#FDD800] transition-colors"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
