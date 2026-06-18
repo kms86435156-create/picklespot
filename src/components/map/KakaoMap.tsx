@@ -46,38 +46,64 @@ export default function KakaoMap({
 
   // Initialize map
   useEffect(() => {
-    if (!window.kakao?.maps) {
-      // Check if SDK script exists but not loaded yet
-      if (!process.env.NEXT_PUBLIC_KAKAO_MAP_KEY) {
-        setNoApiKey(true);
+    const API_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+    if (!API_KEY) {
+      setNoApiKey(true);
+      return;
+    }
+
+    const loadAndInit = () => {
+      if (window.kakao?.maps) {
+        initMap();
         return;
       }
-      // Wait for SDK load
-      const check = setInterval(() => {
-        if (window.kakao?.maps) {
-          clearInterval(check);
-          initMap();
-        }
-      }, 200);
-      const timeout = setTimeout(() => { clearInterval(check); setNoApiKey(true); }, 5000);
-      return () => { clearInterval(check); clearTimeout(timeout); };
-    }
-    initMap();
+
+      // layout.tsx Script가 이미 로드했을 수 있으므로 기존 스크립트 확인
+      const existingScript = document.querySelector('script[src*="dapi.kakao.com"]');
+      if (!existingScript) {
+        // 직접 스크립트 삽입
+        const script = document.createElement("script");
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${API_KEY}&autoload=false`;
+        script.onload = () => {
+          window.kakao.maps.load(() => initMap());
+        };
+        script.onerror = () => setNoApiKey(true);
+        document.head.appendChild(script);
+      } else {
+        // 스크립트 태그는 있는데 아직 로드 안됨 — 폴링
+        const check = setInterval(() => {
+          if (window.kakao?.maps) {
+            clearInterval(check);
+            window.kakao.maps.load(() => initMap());
+          }
+        }, 100);
+        setTimeout(() => { clearInterval(check); setNoApiKey(true); }, 10000);
+      }
+    };
+
+    loadAndInit();
   }, []);
 
   function initMap() {
     if (!containerRef.current || mapRef.current) return;
-    window.kakao.maps.load(() => {
-      const defaultCenter = center || (pins[0] ? { lat: pins[0].lat, lng: pins[0].lng } : { lat: 37.5665, lng: 126.978 });
-      const mapCenter = new window.kakao.maps.LatLng(defaultCenter.lat, defaultCenter.lng);
-      const map = new window.kakao.maps.Map(containerRef.current, {
-        center: mapCenter,
-        level,
-      });
-      // Dark map style (custom overlay for dark feel isn't native to Kakao, but we can adjust)
-      mapRef.current = map;
-      setMapReady(true);
+    // kakao.maps.load()가 이미 호출된 경우 LatLng가 존재함
+    if (window.kakao.maps.LatLng) {
+      createMap();
+    } else {
+      window.kakao.maps.load(() => createMap());
+    }
+  }
+
+  function createMap() {
+    if (!containerRef.current || mapRef.current) return;
+    const defaultCenter = center || (pins[0] ? { lat: pins[0].lat, lng: pins[0].lng } : { lat: 37.5665, lng: 126.978 });
+    const mapCenter = new window.kakao.maps.LatLng(defaultCenter.lat, defaultCenter.lng);
+    const map = new window.kakao.maps.Map(containerRef.current, {
+      center: mapCenter,
+      level,
     });
+    mapRef.current = map;
+    setMapReady(true);
   }
 
   // Update pins when map is ready or pins change
