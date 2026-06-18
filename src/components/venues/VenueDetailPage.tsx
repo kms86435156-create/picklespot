@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { MapPin, Phone, Clock, Car, Home, ExternalLink, ArrowLeft, Trophy, ChevronRight } from "lucide-react";
 import OrganizerCTA from "@/components/ui/OrganizerCTA";
-import KakaoMap from "@/components/map/KakaoMap";
 import DirectionsButton from "@/components/map/DirectionsButton";
 import BookingSlotPicker from "@/components/venues/BookingSlotPicker";
 import VenueReviews from "@/components/venues/VenueReviews";
@@ -60,16 +59,9 @@ export default function VenueDetailPage({ venue: v, nearbyTournaments }: { venue
               )}
             </div>
 
-            {/* Map + Directions */}
+            {/* Directions */}
             {v.lat && v.lng && (
-              <div className="space-y-3">
-                <KakaoMap
-                  pins={[{ id: v.id, lat: v.lat, lng: v.lng, label: v.name, sub: v.address || v.roadAddress, type: "venue" }]}
-                  height="250px"
-                  level={4}
-                />
-                <DirectionsButton lat={v.lat} lng={v.lng} name={v.name} />
-              </div>
+              <DirectionsButton lat={v.lat} lng={v.lng} name={v.name} />
             )}
 
             {/* Booking Slot Picker */}

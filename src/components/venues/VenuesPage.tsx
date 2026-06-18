@@ -3,9 +3,15 @@
 import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { MapPin, Search, Car, Sun, Home, Phone, Clock, ChevronRight, Map, List, Crosshair } from "lucide-react";
-import KakaoMap, { getDistanceKm } from "@/components/map/KakaoMap";
-import type { MapPin as MapPinType } from "@/components/map/KakaoMap";
+import { MapPin, Search, Car, Sun, Home, Phone, Clock, ChevronRight, Crosshair } from "lucide-react";
+
+function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 const REGIONS = ["전체", "서울", "경기", "인천", "부산", "대구", "대전", "광주", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"];
 const TYPES = [
@@ -27,7 +33,6 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
   const [parkingOnly, setParkingOnly] = useState(false);
   const [keyword, setKeyword] = useState("");
   const [sortBy, setSortBy] = useState<"name" | "courtCount" | "distance">("name");
-  const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [myPos, setMyPos] = useState<{ lat: number; lng: number } | null>(null);
   const [radius, setRadius] = useState(0);
   const [locating, setLocating] = useState(false);
@@ -92,17 +97,6 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
     return c;
   }, [venues]);
 
-  const mapPins: MapPinType[] = useMemo(() =>
-    filtered.filter(v => v.lat && v.lng).map(v => ({
-      id: v.id,
-      lat: v.lat,
-      lng: v.lng,
-      label: v.name,
-      sub: `${v.indoorOutdoor || "실내"} · 코트 ${v.courtCount || "?"}면${v._distance ? ` · ${v._distance.toFixed(1)}km` : ""}`,
-      type: "venue" as const,
-    })),
-  [filtered]);
-
   return (
     <div className="min-h-screen bg-dark pt-14">
       {/* Hero */}
@@ -117,17 +111,6 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
                 <h1 className="text-2xl md:text-3xl font-bold text-white">전국 피클볼장</h1>
                 <p className="text-sm text-text-muted">가까운 피클볼장을 찾아보세요</p>
               </div>
-            </div>
-            {/* View Toggle */}
-            <div className="flex bg-surface border border-ui-border rounded-lg overflow-hidden">
-              <button onClick={() => setViewMode("list")}
-                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "list" ? "bg-brand-cyan/10 text-brand-cyan" : "text-text-muted hover:text-white"}`}>
-                <List className="w-3.5 h-3.5" /> 리스트
-              </button>
-              <button onClick={() => setViewMode("map")}
-                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-colors ${viewMode === "map" ? "bg-brand-cyan/10 text-brand-cyan" : "text-text-muted hover:text-white"}`}>
-                <Map className="w-3.5 h-3.5" /> 지도
-              </button>
             </div>
           </div>
           <div className="flex gap-6 mt-4 text-sm">
@@ -146,8 +129,8 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
-        {/* Featured (list mode only) */}
-        {viewMode === "list" && featured.length > 0 && region === "전체" && !keyword && (
+        {/* Featured */}
+        {featured.length > 0 && region === "전체" && !keyword && (
           <section>
             <h2 className="font-bold text-white mb-4">추천 피클볼장</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -215,19 +198,8 @@ export default function VenuesPage({ venues }: { venues: any[] }) {
           </div>
         </div>
 
-        {/* Map View */}
-        {viewMode === "map" && (
-          <KakaoMap
-            pins={mapPins}
-            height="500px"
-            showMyLocation
-            center={myPos || undefined}
-            level={myPos ? 6 : 8}
-          />
-        )}
-
-        {/* Results (list view) */}
-        {viewMode === "list" && (
+        {/* Results */}
+        {(
           <div>
             <p className="text-sm text-text-muted mb-4">{filtered.length}개 장소</p>
             {filtered.length === 0 ? (

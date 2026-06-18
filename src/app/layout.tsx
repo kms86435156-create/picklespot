@@ -6,7 +6,6 @@ import Footer from "@/components/layout/Footer";
 import BottomNavBar from "@/components/layout/BottomNavBar";
 import ClientProviders from "@/components/layout/ClientProviders";
 import NoticeBanner from "@/components/home/NoticeBanner";
-import Script from "next/script";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -78,12 +77,6 @@ export default function RootLayout({
       <body
         className={`${pretendard.variable} ${jetbrainsMono.variable} font-sans antialiased bg-dark text-text-main`}
       >
-        {process.env.NEXT_PUBLIC_KAKAO_MAP_KEY && (
-          <Script
-            src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_KEY}&autoload=false`}
-            strategy="beforeInteractive"
-          />
-        )}
         <ClientProviders>
           <Navbar />
           <div className="pt-14">

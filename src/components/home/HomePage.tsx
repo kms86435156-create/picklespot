@@ -7,8 +7,6 @@ import {
   Zap, MapPin, Users, ArrowRight, Star, Home, Sun,
   ChevronRight, Calendar, BookOpen, Trophy
 } from "lucide-react";
-import KakaoMap from "@/components/map/KakaoMap";
-import type { MapPin as MapPinType } from "@/components/map/KakaoMap";
 
 const REGIONS = ["전체", "서울", "경기", "인천", "부산", "대구", "대전", "광주", "울산", "강원", "제주"];
 
@@ -329,17 +327,6 @@ export default function HomePage(p: Props) {
 
             {p.featuredVenues.length > 0 ? (
               <>
-                <div className="mb-5 rounded-xl overflow-hidden border border-ui-border">
-                  <KakaoMap
-                    pins={p.featuredVenues.filter((v: any) => v.lat && v.lng).map((v: any) => ({
-                      id: v.id, lat: v.lat, lng: v.lng, label: v.name,
-                      sub: `${v.indoorOutdoor || "실내"} · 코트 ${v.courtCount}면`,
-                      type: "venue" as const,
-                    })) as MapPinType[]}
-                    height="240px"
-                    level={10}
-                  />
-                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                   {p.featuredVenues.map((v: any) => (
                     <Link key={v.id} href={`/courts/${v.id}`} className="block group">
