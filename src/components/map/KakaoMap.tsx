@@ -42,11 +42,13 @@ export default function KakaoMap({
   const overlayRef = useRef<any>(null);
   const [mapReady, setMapReady] = useState(false);
   const [noApiKey, setNoApiKey] = useState(false);
+  const [debug, setDebug] = useState("init");
   const myPosRef = useRef<{ lat: number; lng: number } | null>(null);
 
   // Initialize map
   useEffect(() => {
     const API_KEY = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
+    setDebug(`key=${API_KEY ? "있음" : "없음"}, kakao=${typeof window.kakao}`);
     if (!API_KEY) {
       setNoApiKey(true);
       return;
@@ -54,30 +56,49 @@ export default function KakaoMap({
 
     const loadAndInit = () => {
       if (window.kakao?.maps) {
+        setDebug("kakao.maps 존재 → initMap");
         initMap();
         return;
       }
 
-      // layout.tsx Script가 이미 로드했을 수 있으므로 기존 스크립트 확인
       const existingScript = document.querySelector('script[src*="dapi.kakao.com"]');
+      setDebug(`기존스크립트=${existingScript ? "있음" : "없음"}, kakao=${typeof window.kakao}`);
+
       if (!existingScript) {
-        // 직접 스크립트 삽입
         const script = document.createElement("script");
         script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${API_KEY}&autoload=false`;
         script.onload = () => {
-          window.kakao.maps.load(() => initMap());
+          setDebug(`스크립트로드완료, kakao=${typeof window.kakao}, maps=${typeof window.kakao?.maps}`);
+          if (window.kakao?.maps) {
+            window.kakao.maps.load(() => {
+              setDebug("maps.load 콜백 실행됨");
+              initMap();
+            });
+          } else {
+            setDebug("스크립트 로드했지만 kakao.maps 없음");
+          }
         };
-        script.onerror = () => setNoApiKey(true);
+        script.onerror = (e) => { setDebug(`스크립트 로드 에러: ${e}`); setNoApiKey(true); };
         document.head.appendChild(script);
       } else {
         // 스크립트 태그는 있는데 아직 로드 안됨 — 폴링
+        let count = 0;
         const check = setInterval(() => {
+          count++;
           if (window.kakao?.maps) {
             clearInterval(check);
-            window.kakao.maps.load(() => initMap());
+            setDebug(`폴링 ${count}회 후 maps 발견 → load 호출`);
+            window.kakao.maps.load(() => {
+              setDebug("폴링 후 maps.load 콜백 실행됨");
+              initMap();
+            });
           }
         }, 100);
-        setTimeout(() => { clearInterval(check); setNoApiKey(true); }, 10000);
+        setTimeout(() => {
+          clearInterval(check);
+          setDebug(`폴링 타임아웃 (${count}회), kakao=${typeof window.kakao}, maps=${typeof window.kakao?.maps}`);
+          setNoApiKey(true);
+        }, 10000);
       }
     };
 
@@ -229,7 +250,10 @@ export default function KakaoMap({
       )}
       {!mapReady && (
         <div className="absolute inset-0 bg-surface flex items-center justify-center">
-          <div className="text-text-muted text-sm animate-pulse">지도 로딩 중...</div>
+          <div className="text-center">
+            <div className="text-text-muted text-sm animate-pulse">지도 로딩 중...</div>
+            <div className="text-yellow-400 text-xs mt-2 font-mono">[DEBUG] {debug}</div>
+          </div>
         </div>
       )}
     </div>
