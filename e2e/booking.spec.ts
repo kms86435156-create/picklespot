@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { createAdminToken } from "./helpers";
 
 test.describe("예약 요청", () => {
   test("예약 요청 API 생성", async ({ request }) => {
@@ -8,7 +9,7 @@ test.describe("예약 요청", () => {
         venueName: "테스트 구장",
         requesterName: "테스트유저",
         requesterPhone: "010-1234-5678",
-        bookingDate: "2026-04-10",
+        bookingDate: "2026-12-10",
         bookingTime: "14:00",
         playerCount: 4,
         memo: "E2E 테스트",
@@ -25,22 +26,28 @@ test.describe("예약 요청", () => {
     expect(res.status()).toBe(400);
   });
 
-  test("관리자 예약 요청 목록", async ({ request }) => {
-    const res = await request.get("/api/admin/booking-requests");
+  test("관리자 예약 요청 목록", async ({ page, context }) => {
+    const adminCookie = await createAdminToken();
+    await context.addCookies([{ name: "admin_token", value: adminCookie, domain: "localhost", path: "/" }]);
+    const res = await page.request.get("/api/admin/booking-requests");
     expect(res.ok()).toBeTruthy();
     const data = await res.json();
     expect(data.bookingRequests).toBeDefined();
   });
 
-  test("관리자 예약 상태 변경", async ({ request }) => {
+  test("관리자 예약 상태 변경", async ({ page, context, request }) => {
+    const adminCookie = await createAdminToken();
+    await context.addCookies([{ name: "admin_token", value: adminCookie, domain: "localhost", path: "/" }]);
+
     // 먼저 예약 생성
     const createRes = await request.post("/api/booking-requests", {
-      data: { venueId: "v-test", venueName: "테스트", requesterName: "관리자테스트", requesterPhone: "010-9999-8888", bookingDate: "2026-04-15" },
+      data: { venueId: "v-test", venueName: "테스트", requesterName: "관리자테스트", requesterPhone: "010-9999-8888", bookingDate: "2026-12-15" },
     });
+    expect(createRes.ok()).toBeTruthy();
     const { bookingRequest } = await createRes.json();
 
     // 상태 변경
-    const updateRes = await request.put(`/api/admin/booking-requests/${bookingRequest.id}`, {
+    const updateRes = await page.request.put(`/api/admin/booking-requests/${bookingRequest.id}`, {
       data: { status: "confirmed" },
     });
     expect(updateRes.ok()).toBeTruthy();

@@ -8,6 +8,9 @@ export default defineConfig({
     port: 3000,
     reuseExistingServer: true,
     timeout: 60000,
+    env: {
+      SUPABASE_DISABLED: "true",
+    },
   },
   use: {
     baseURL: "http://localhost:3000",
