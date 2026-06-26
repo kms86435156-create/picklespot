@@ -49,19 +49,23 @@ export default function AdminMeetupsPage() {
             <div key={m.id} className="bg-surface border border-ui-border rounded-lg p-4 flex items-center gap-4">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${m.status === "open" ? "text-green-400 bg-green-400/10 border-green-400/20" : "text-text-muted bg-white/5 border-ui-border"}`}>{m.status}</span>
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                    m.status === "open" ? "text-green-400 bg-green-400/10 border-green-400/20"
+                    : m.status === "expired" ? "text-orange-400 bg-orange-400/10 border-orange-400/20"
+                    : "text-text-muted bg-white/5 border-ui-border"
+                  }`}>{m.status === "expired" ? "만료" : m.status}</span>
                   {m.isFeatured && <span className="text-[10px] text-yellow-400 bg-yellow-400/10 px-1.5 py-0.5 rounded border border-yellow-400/20">추천</span>}
                   <span className="text-xs text-text-muted">{m.meetupDate} {m.meetupTime}</span>
                 </div>
                 <h3 className="font-bold text-sm truncate">{m.title}</h3>
-                <div className="text-xs text-text-muted">{m.hostName} · {m.venueName || m.region} · {m.currentPlayers || 0}/{m.maxPlayers}명</div>
+                <div className="text-xs text-text-muted">{m.hostName} · {m.date || m.meetupDate} · {m.venueName || m.region} · {m.currentPlayers || 0}/{m.maxPlayers}명</div>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <button onClick={() => toggleFeatured(m.id, m.isFeatured)} className="px-2 py-1 text-xs text-text-muted hover:text-yellow-400 border border-ui-border rounded">
                   {m.isFeatured ? "추천해제" : "추천"}
                 </button>
                 {m.status === "open" && <button onClick={() => updateStatus(m.id, "closed")} className="px-2 py-1 text-xs text-text-muted hover:text-red-400 border border-ui-border rounded">마감</button>}
-                {m.status === "closed" && <button onClick={() => updateStatus(m.id, "open")} className="px-2 py-1 text-xs text-text-muted hover:text-green-400 border border-ui-border rounded">재오픈</button>}
+                {(m.status === "closed" || m.status === "expired") && <button onClick={() => updateStatus(m.id, "open")} className="px-2 py-1 text-xs text-text-muted hover:text-green-400 border border-ui-border rounded">재오픈</button>}
                 <button onClick={() => deleteMeetup(m.id)} className="p-1 text-text-muted hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>

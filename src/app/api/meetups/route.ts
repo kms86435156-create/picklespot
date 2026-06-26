@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
     date: s.get("date") || undefined,
     status: s.get("status") || undefined,
     isBeginnerFriendly: s.get("beginnerOnly") === "1" ? true : undefined,
+    excludeExpired: true,
   };
   const meetups = await getMeetups(filters);
   return NextResponse.json({ meetups });

@@ -542,7 +542,10 @@ export async function getMeetups(filters?: {
   date?: string; // YYYY-MM-DD
   status?: string;
   isBeginnerFriendly?: boolean;
+  excludeExpired?: boolean; // true → 날짜 지난 번개 제외 (공개 API용)
 }) {
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+
   if (isSupabaseEnabled) {
     let q = db!.from("meetups").select("*, meetup_participants(count)");
     if (filters?.region && filters.region !== "전체") q = q.eq("region", filters.region);
@@ -552,6 +555,9 @@ export async function getMeetups(filters?: {
     if (filters?.status) q = q.eq("status", filters.status);
     if (filters?.isBeginnerFriendly) q = q.eq("is_beginner_friendly", true);
     if (filters?.date) q = q.gte("date", filters.date).lt("date", filters.date + "T23:59:59");
+    if (filters?.excludeExpired) {
+      q = q.gte("date", today).neq("status", "expired");
+    }
     const { data } = await q.order("date", { ascending: true });
     return (data || []).map(toCamel);
   }
@@ -563,6 +569,9 @@ export async function getMeetups(filters?: {
   if (filters?.status) m = m.filter((x: any) => x.status === filters.status);
   if (filters?.isBeginnerFriendly) m = m.filter((x: any) => x.isBeginnerFriendly === true);
   if (filters?.date) m = m.filter((x: any) => x.date?.startsWith(filters.date!));
+  if (filters?.excludeExpired) {
+    m = m.filter((x: any) => x.date >= today && x.status !== "expired");
+  }
   return m.sort((a: any, b: any) => (a.date || "").localeCompare(b.date || ""));
 }
 
