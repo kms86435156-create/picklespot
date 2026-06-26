@@ -628,18 +628,20 @@ export async function createMeetup(meetup: any) {
   return entity;
 }
 
-export async function applyMeetup(meetupId: string, userId: string, userName: string) {
+export async function applyMeetup(meetupId: string, userId: string, userName: string, message?: string) {
   if (isSupabaseEnabled) {
     const { data: existing } = await db!.from("meetup_participants").select("id").eq("meetup_id", meetupId).eq("user_id", userId).single();
     if (existing) return { alreadyApplied: true };
-    const { error } = await db!.from("meetup_participants").insert({
+    const row: any = {
       id: `mp_${Date.now()}`,
       meetup_id: meetupId,
       user_id: userId,
       user_name: userName,
       status: "confirmed",
       joined_at: new Date().toISOString(),
-    });
+    };
+    if (message) row.message = message;
+    const { error } = await db!.from("meetup_participants").insert(row);
     if (error) throw new Error(error.message);
     // Increment current_players via count query
     try {
@@ -653,14 +655,16 @@ export async function applyMeetup(meetupId: string, userId: string, userName: st
   if (participants.find((p: any) => p.meetupId === meetupId && p.userId === userId)) {
     return { alreadyApplied: true };
   }
-  participants.push({
+  const entry: any = {
     id: `mp_${Date.now()}`,
     meetupId,
     userId,
     userName,
     status: "confirmed",
     joinedAt: new Date().toISOString(),
-  });
+  };
+  if (message) entry.message = message;
+  participants.push(entry);
   writeJSON("meetup-participants.json", participants);
   const meetups = readJSON("meetups.json");
   const idx = meetups.findIndex((m: any) => m.id === meetupId);

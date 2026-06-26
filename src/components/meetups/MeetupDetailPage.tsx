@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Calendar, Clock, Users, Phone, CheckCircle, Loader2, AlertTriangle } from "lucide-react";
+import { maskName } from "@/lib/mask-name";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   open: { label: "모집중", color: "text-green-400 bg-green-400/10 border-green-400/20" },
@@ -71,7 +72,7 @@ export default function MeetupDetailPage({ meetup: m, participants }: { meetup: 
             <div className="bg-dark/30 border border-ui-border rounded p-3 mb-5">
               <div className="text-xs text-text-muted mb-1">주최자</div>
               <div className="flex items-center gap-3">
-                <span className="font-bold">{m.hostName}</span>
+                <span className="font-bold">{maskName(m.hostName)}</span>
                 {m.hostPhone && <a href={`tel:${m.hostPhone}`} className="flex items-center gap-1 text-xs text-brand-cyan hover:underline"><Phone className="w-3 h-3" />{m.hostPhone}</a>}
               </div>
             </div>
@@ -139,7 +140,7 @@ export default function MeetupDetailPage({ meetup: m, participants }: { meetup: 
             <div className="space-y-2">
               {joinedList.map(p => (
                 <div key={p.id} className="flex items-center justify-between bg-dark/30 border border-ui-border rounded p-2 text-sm">
-                  <span className="font-medium">{p.participantName}</span>
+                  <span className="font-medium">{maskName(p.participantName)}</span>
                   <span className="text-xs text-text-muted">{new Date(p.createdAt).toLocaleDateString("ko-KR")}</span>
                 </div>
               ))}
@@ -152,7 +153,7 @@ export default function MeetupDetailPage({ meetup: m, participants }: { meetup: 
             <div className="space-y-2">
               {waitlist.map(p => (
                 <div key={p.id} className="flex items-center justify-between bg-dark/30 border border-ui-border rounded p-2 text-sm">
-                  <span className="font-medium">{p.participantName}</span>
+                  <span className="font-medium">{maskName(p.participantName)}</span>
                   <span className="text-xs text-yellow-400">대기중</span>
                 </div>
               ))}

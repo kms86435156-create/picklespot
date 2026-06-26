@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getMeetup, applyMeetup, cancelMeetupApplication } from "@/lib/db";
 import { getUserSession } from "@/lib/auth";
 
-export async function POST(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getUserSession();
   if (!session) {
     return NextResponse.json({ error: "로그인이 필요합니다" }, { status: 401 });
@@ -20,7 +20,15 @@ export async function POST(_req: NextRequest, { params }: { params: { id: string
     return NextResponse.json({ error: "인원이 꽉 찼습니다" }, { status: 400 });
   }
 
-  const result = await applyMeetup(params.id, session.id, session.name);
+  let message: string | undefined;
+  try {
+    const body = await req.json();
+    if (body.message && typeof body.message === "string") {
+      message = body.message.trim().slice(0, 300);
+    }
+  } catch {}
+
+  const result = await applyMeetup(params.id, session.id, session.name, message);
   if (result.alreadyApplied) {
     return NextResponse.json({ error: "이미 신청하셨습니다" }, { status: 400 });
   }

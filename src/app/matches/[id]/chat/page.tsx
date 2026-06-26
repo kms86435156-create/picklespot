@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, Send, Users, Zap } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { getSupabaseBrowser } from "@/lib/supabase-browser";
+import { maskName } from "@/lib/mask-name";
 
 interface Message {
   id: string;
@@ -193,7 +194,7 @@ export default function MeetupChatPage() {
                   <div className={`flex ${isMine ? "justify-end" : "justify-start"} mb-1`}>
                     <div className={`max-w-[75%] ${isMine ? "order-2" : ""}`}>
                       {!isMine && (
-                        <p className="text-[10px] text-text-muted mb-0.5 ml-1">{msg.user_name}</p>
+                        <p className="text-[10px] text-text-muted mb-0.5 ml-1">{maskName(msg.user_name)}</p>
                       )}
                       <div className="flex items-end gap-1.5">
                         {isMine && <span className="text-[9px] text-text-muted/40 mb-0.5">{formatTime(msg.created_at)}</span>}
